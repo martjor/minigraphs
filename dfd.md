@@ -18,7 +18,7 @@ flowchart TD;
     ent:user([User])
 
     %%  Wiring
-    proc:params-- Hola ---ds:net_repo
+    proc:params-- Miniaturization Parameters ---ds:net_repo
     ds:net_repo-- Miniaturization Paremeters ---proc:pt
     proc:pt-- Network Miniature ---ds:dir_min
     ds:dir_min-- Network Miniature ---proc:simulations
