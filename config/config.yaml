@@ -1,0 +1,12 @@
+name: "test"
+generator:
+  name: "ER"
+  n_vertices: 10
+  params:
+    p: 0.1
+
+payoff:
+  n_trials: 10
+
+
+
