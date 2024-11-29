@@ -3,10 +3,11 @@ generator:
   name: "ER"
   n_vertices: 10
   params:
-    p: 0.1
+    p: 1.0
 
 payoff:
   n_trials: 10
+  n_iterations: 50
 
 
 

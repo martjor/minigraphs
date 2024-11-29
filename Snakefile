@@ -5,7 +5,9 @@ graph_name = config['name']
 
 rule all:
     input:
-        "data/test/adjacency.npz"
+        "data/test/adjacency.npz",
+        "data/test/entry_0_0/count.yaml",
+        "data/test/entry_5_0/count.yaml"
 
 rule generate_graph:
     output:
@@ -15,15 +17,18 @@ rule generate_graph:
     script:
         "scripts/generate.py"
 
-# rule payoff:
-#     input:
-#         "{path}/adjacency.npz"
-#     output:
-#         temp("{path}/entry_{i}_{j}.npy")
-#     params:
-#         n_trials=config['payoff']['n_trials']
-#     script:
-#         "scripts/simulate.py"
+rule payoff:
+    input:
+        "{path}/adjacency.npz"
+    output:
+        "{path}/entry_{i}_{j}/count.yaml",
+        "{path}/entry_{i}_{j}/adjacency.npz"
+    
+    params:
+        n_trials=config['payoff']['n_trials'],
+        n_iterations=config['payoff']['n_iterations']
+    script:
+        "scripts/compute_payoff.py"
 
 # rule payoff:
 #     input:

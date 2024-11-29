@@ -1,6 +1,7 @@
 ```mermaid
 flowchart TD
-    config@{shape: rounded, label: Configuration file}-- "Graph Name" ---> payoff((Construct Payoff Matrices))
+    config@{shape: rounded, label: Configuration file}-- "Graph Generation Parameters" ---> generate((Generate Graph))
+    generate--->payoff((Construct Payoff Matrices))
     config--"Number of trials"--->payoff
     payoff--"Payoff Matrices"--->responses((Find individual best responses))
     responses--"Expected Rewards"--->poa

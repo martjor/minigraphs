@@ -10,6 +10,14 @@ $$P_c=\frac{\mathbf 1_{c}}{\mathbf 1 _c+\mathbf 1_{C-\{c\}}}.$$
 
 Here, $\mathbf 1_c$ is an indicator function denoting the event where the node has been chosen by the player with color $c$. 
 
+We adopt the generalized adoption function $h(\cdot)$ defined as 
+$$h(\alpha_R,\alpha_B)=\frac{\alpha_R}{\alpha_R+\alpha_B}.$$
+
+Notice that this function is competitive since
+$$h(\alpha_R,\alpha_B)\leq h(\alpha_A,0)$$
+
+which means that either player benefits from the absence of the other player. 
+
 
 
 ## The Price of Anarchy (PoA)

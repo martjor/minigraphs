@@ -18,6 +18,19 @@ script params
 script miniaturize
     Creates the miniature of a graph using Parallel Tempering
 
+    Parameters
+    ----------
+    path_metrics
+        path to the .json file containing the metrics of the graph
+    path_params
+        path to the .json file containing the miniaturization parameters for the graph
+    n_changes
+        number of changes proposed at each step
+    n_steps
+        number of total miniaturization steps
+    n_substeps
+        
+
 script simulate_sir
     Simulates the Susceptible-infected-recovered compartmental model on a graph
 
