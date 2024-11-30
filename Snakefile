@@ -1,13 +1,14 @@
 configfile: "config/config.yaml"
 import numpy as np
+import yaml
+
 
 graph_name = config['name']
-
+n_vertices = config['generator']['n_vertices']
 rule all:
     input:
-        "data/test/adjacency.npz",
-        "data/test/entry_0_0/count.yaml",
-        "data/test/entry_5_0/count.yaml"
+        "results/test/payoffs.png",
+        "data/test/equilibria/"
 
 rule generate_graph:
     output:
@@ -17,12 +18,12 @@ rule generate_graph:
     script:
         "scripts/generate.py"
 
-rule payoff:
+rule payoff_entries:
     input:
         "{path}/adjacency.npz"
     output:
-        "{path}/entry_{i}_{j}/count.yaml",
-        "{path}/entry_{i}_{j}/adjacency.npz"
+        "{path}/entries/count_{i}_{j}.yaml",
+        "{path}/entries/graph_{i}_{j}.gexf"
     
     params:
         n_trials=config['payoff']['n_trials'],
@@ -30,30 +31,61 @@ rule payoff:
     script:
         "scripts/compute_payoff.py"
 
-# rule payoff:
+rule payoff_matrix:
+    input:
+        entries=lambda w:[f"data/{w.name}/entries/count_{i}_{j}.yaml" for i in range(n_vertices) for j in range(n_vertices)]
+    output:
+        "data/{name}/payoff_red.npy",
+        "data/{name}/payoff_blue.npy"
+    run:
+        # Allocate memory for payoff matrix
+        red = np.zeros((n_vertices,n_vertices))
+        blue = np.zeros((n_vertices,n_vertices))
+
+        # Read each entry into the matrix
+        for i in range(n_vertices):
+            for j in range(n_vertices):
+                idx = i * n_vertices + j
+
+                with open(input.entries[idx],'r') as file:
+                    count = yaml.safe_load(file)
+
+                red[i,j] = count['red']
+                blue[i,j] = count['blue']
+
+        # Save matrix
+        np.save(output[0],red)
+        np.save(output[1],blue)
+
+rule payoff_draw:
+    input:
+        "data/{name}/payoff_red.npy",
+        "data/{name}/payoff_blue.npy"
+    output:
+        "results/{name}/payoffs.png"
+    script: 
+        "scripts/payoff_draw.py"
+
+rule find_equilibria:
+    input:
+        "{path}/payoff_red.npy",
+        "{path}/payoff_blue.npy"
+    output:
+        directory("{path}/equilibria/")
+    script:
+        "scripts/equilibria.py"
+
+# rule simulate_equilibrium:
 #     input:
-#         entries=[f"data/entry_{i}_{j}.npy" for i in range(n_vertices) for j in range(n_vertices)]
+#         "{path}/equilibrium_{idx}.npy"
 #     output:
-#         "data/payoff.npy"
-#     run:
-#         # Allocate memory for payoff matrix
-#         M = np.zeros((n_vertices,n_vertices))
+#         "{path}/count_{idx}.yaml",
+#         "{path}/graph_{idx}.gexf"
+#     script:
+#         "scripts/"
 
-#         # Read each entry into the matrix
-#         for i in range(n_vertices):
-#             for j in range(n_vertices):
-#                 idx = i * n_vertices + j
-#                 M[i,j] = np.load(input.entries[idx])
 
-#         # Save matrix
-#         np.save(output[0],M)
 
-# rule draw:
-#     input:
-#         "data/payoff.npy"
-#     output:
-#         "results/payoff.png"
-#     script: 
-#         "scripts/draw_payoff.py"
+
 
 
