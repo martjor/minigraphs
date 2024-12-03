@@ -4,9 +4,9 @@ import yaml
 import glob
 import pandas as pd
 
-
 graph_name = config['name']
-n_vertices = config['generator']['n_vertices']
+n_vertices = 10
+
 rule all:
     input:
         "results/test/figures/welfare.png",
@@ -16,7 +16,7 @@ rule generate_graph:
     output:
         "data/{name}/adjacency.npz"
     params:
-        params_gen=config['generator']
+        p=0.1
     script:
         "scripts/generate.py"
 

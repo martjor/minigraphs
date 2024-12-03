@@ -1,13 +1,11 @@
 name: "test"
 generator:
-  name: "ER"
-  n_vertices: 10
-  params:
-    p: 1.0
+    p: 0.5
 
 payoff:
-  n_trials: 10
+  n_trials: 25
   n_iterations: 50
 
-
-
+payoff_equilibria:
+  n_trials: 25
+  n_iterations: 50 
