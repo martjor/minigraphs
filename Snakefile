@@ -10,11 +10,10 @@ p = eval(config['generator']['p'])
 
 rule all:
     input:
-        "results/graph_0/figures/grid.png",
-        "results/graph_1/figures/grid.png",
-        "results/graph_9/figures/grid.png",
-        "results/graph_9/figures/welfare.png",
-        "results/graph_9/figures/payoffs.png"
+        expand("results/graph_{idx}/figures/{file}.png",
+            idx=range(p.shape[0]),
+            file=["welfare","payoffs","grid"]),
+        "results/poa.png"
 
 rule generate_graph:
     output:
@@ -62,15 +61,6 @@ rule payoff_matrix:
         # Save matrix
         np.save(output[0],red)
         np.save(output[1],blue)
-
-rule payoff_draw:
-    input:
-        "data/{name}/payoff_red.npy",
-        "data/{name}/payoff_blue.npy"
-    output:
-        "results/{name}/payoffs.png"
-    script: 
-        "scripts/payoff_draw.py"
 
 checkpoint find_equilibria:
     input:
