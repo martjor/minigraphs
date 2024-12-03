@@ -3,3 +3,4 @@ data/
 *.pyc
 .snakemake/
 log/
+results/
