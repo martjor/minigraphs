@@ -154,3 +154,11 @@ rule price_of_anarchy:
         "results/{name}/figures/payoffs.png",
     notebook:
         "notebooks/analysis.py.ipynb"
+
+rule poa_viz:
+    input:
+        expand("results/graph_{idx}/poa.yaml",idx=range(p.shape[0]))
+    output:
+        "results/poa.png"
+    notebook:
+        "notebooks/poa.py.ipynb"
