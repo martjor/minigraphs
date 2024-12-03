@@ -9,7 +9,8 @@ graph_name = config['name']
 n_vertices = config['generator']['n_vertices']
 rule all:
     input:
-        "results/test/equilibria.csv"
+        "results/test/figures/welfare.png",
+        "results/test/figures/grid.png",
 
 rule generate_graph:
     output:
@@ -89,25 +90,32 @@ rule simulate_equilibrium:
     script:
         "scripts/compute_payoff_equilibria.py"
 
-def equilibria(wildcards):
+def match(wildcards,pattern):
     equilibria_dir = checkpoints.find_equilibria.get(**wildcards).output[0]
 
     idx, = glob_wildcards(f"data/{wildcards.name}/equilibria/equilibrium_{{idx}}.npy")
-    files = expand(f"data/{wildcards.name}/equilibria/count_{{idx}}.yaml",idx=idx)
+    files = expand(f"data/{wildcards.name}/equilibria/{pattern}",idx=idx)
     return files
 
 rule aggregate_equilibria:
     input:
-        equilibria 
+        counts = lambda w: match(w,"count_{idx}.yaml"),
+        equilibria = lambda w: match(w,"equilibrium_{idx}.npy")
     output:
-        "results/{name}/equilibria.csv"
+        "results/{name}/equilibria.csv",
+        "results/{name}/equilibria.npy"
     params:
         indices=lambda w: glob_wildcards(f"data/{w.name}/equilibria/equilibrium_{{idx}}.npy").idx
     run:
         dicts = []
-        for file in input:
-            with open(file,'r') as f:
+        equilibria = []
+
+        # Load equilibria counts and probability vectors
+        for count, eq in zip(input.counts,input.equilibria):
+            with open(count,'r') as f:
                 dicts.append(yaml.safe_load(f))
+
+            equilibria.append(np.load(eq))
         
         df = pd.DataFrame(dicts)
         df['idx'] = params.indices
@@ -115,18 +123,30 @@ rule aggregate_equilibria:
 
         df['welfare'] = df['red'] + df['blue']
 
+        equilibria = np.array(equilibria)
+
+        # Save files
         df.to_csv(output[0])
+        np.save(output[1],equilibria)
+
+rule draw_graph:
+    input:
+        entries=expand("data/{{name}}/entries/graph_{i}_{j}.gexf",i=range(n_vertices),j=range(n_vertices))
+    output:
+        "results/{name}/figures/grid.png"
+    notebook:
+        "notebooks/grid.py.ipynb"
+
 
 rule price_of_anarchy:
     input:
         red="data/{name}/payoff_red.npy",
         blue="data/{name}/payoff_blue.npy",
-        equilibria="results/{name}/equilibria.csv"
+        equilibria_csv="results/{name}/equilibria.csv",
+        equilibria_arr="results/{name}/equilibria.npy"
+    output:
+        "results/{name}/poa.yaml",
+        "results/{name}/figures/welfare.png",
+        "results/{name}/figures/payoffs.png",
     notebook:
         "notebooks/analysis.py.ipynb"
-
-
-
-
-
-
