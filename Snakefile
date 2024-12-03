@@ -6,17 +6,21 @@ import pandas as pd
 
 graph_name = config['name']
 n_vertices = 10
+p = eval(config['generator']['p'])
 
 rule all:
     input:
-        "results/test/figures/welfare.png",
-        "results/test/figures/grid.png",
+        "results/graph_0/figures/grid.png",
+        "results/graph_1/figures/grid.png",
+        "results/graph_9/figures/grid.png",
+        "results/graph_9/figures/welfare.png",
+        "results/graph_9/figures/payoffs.png"
 
 rule generate_graph:
     output:
-        "data/{name}/adjacency.npz"
+        "data/graph_{idx}/adjacency.npz"
     params:
-        p=0.1
+        p=lambda w: p[int(w.idx)]
     script:
         "scripts/generate.py"
 
@@ -103,7 +107,7 @@ rule aggregate_equilibria:
         equilibria = lambda w: match(w,"equilibrium_{idx}.npy")
     output:
         "results/{name}/equilibria.csv",
-        "results/{name}/equilibria.npy"
+        temp("results/{name}/equilibria.npy")
     params:
         indices=lambda w: glob_wildcards(f"data/{w.name}/equilibria/equilibrium_{{idx}}.npy").idx
     run:
