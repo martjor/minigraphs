@@ -1,14 +1,15 @@
 configfile: "config/config.yaml"
 import numpy as np
 import yaml
+import glob
+import pandas as pd
 
 
 graph_name = config['name']
 n_vertices = config['generator']['n_vertices']
 rule all:
     input:
-        "results/test/payoffs.png",
-        "data/test/equilibria/"
+        "results/test/equilibria.csv"
 
 rule generate_graph:
     output:
@@ -66,23 +67,63 @@ rule payoff_draw:
     script: 
         "scripts/payoff_draw.py"
 
-rule find_equilibria:
+checkpoint find_equilibria:
     input:
-        "{path}/payoff_red.npy",
-        "{path}/payoff_blue.npy"
+        "data/{name}/payoff_red.npy",
+        "data/{name}/payoff_blue.npy"
     output:
-        directory("{path}/equilibria/")
+        directory("data/{name}/equilibria")
     script:
         "scripts/equilibria.py"
 
-# rule simulate_equilibrium:
-#     input:
-#         "{path}/equilibrium_{idx}.npy"
-#     output:
-#         "{path}/count_{idx}.yaml",
-#         "{path}/graph_{idx}.gexf"
-#     script:
-#         "scripts/"
+rule simulate_equilibrium:
+    input:
+        "{path}/adjacency.npz",
+        "{path}/equilibria/equilibrium_{idx}.npy"
+    output:
+        "{path}/equilibria/count_{idx}.yaml",
+        "{path}/equilibria/graph_{idx}.gexf"
+    params:
+        n_iterations=config['payoff_equilibria']['n_iterations'],
+        n_trials=config['payoff_equilibria']['n_trials']
+    script:
+        "scripts/compute_payoff_equilibria.py"
+
+def equilibria(wildcards):
+    equilibria_dir = checkpoints.find_equilibria.get(**wildcards).output[0]
+
+    idx, = glob_wildcards(f"data/{wildcards.name}/equilibria/equilibrium_{{idx}}.npy")
+    files = expand(f"data/{wildcards.name}/equilibria/count_{{idx}}.yaml",idx=idx)
+    return files
+
+rule aggregate_equilibria:
+    input:
+        equilibria 
+    output:
+        "results/{name}/equilibria.csv"
+    params:
+        indices=lambda w: glob_wildcards(f"data/{w.name}/equilibria/equilibrium_{{idx}}.npy").idx
+    run:
+        dicts = []
+        for file in input:
+            with open(file,'r') as f:
+                dicts.append(yaml.safe_load(f))
+        
+        df = pd.DataFrame(dicts)
+        df['idx'] = params.indices
+        df.set_index('idx',inplace=True)
+
+        df['welfare'] = df['red'] + df['blue']
+
+        df.to_csv(output[0])
+
+rule price_of_anarchy:
+    input:
+        red="data/{name}/payoff_red.npy",
+        blue="data/{name}/payoff_blue.npy",
+        equilibria="results/{name}/equilibria.csv"
+    notebook:
+        "notebooks/analysis.py.ipynb"
 
 
 
