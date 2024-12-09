@@ -156,15 +156,25 @@ class MH:
             self.func_loss = func_loss
         
     @property
-    def metrics(self):
+    def metrics(self) -> list[str]:
+        """
+        Names of metrics to target
+        """
         return list(self._metrics.keys())
     
     @property
-    def weights(self):
+    def weights(self) -> list[str]:
+        """
+        Names of metrics associated with weights
+        """
         return list(self._weights.keys())
     
     @property
-    def trajectories_(self):
+    def trajectories_(self) -> pd.DataFrame:
+        """
+        DataFrame containing the trajectories of associated
+        with the miniaturization procedure
+        """
         names = ['Step','Beta','Energy'] + list(self._targets_names)
         df = pd.DataFrame(self._trajectories_,columns=names)
         df.set_index('Step',inplace=True)
@@ -429,12 +439,28 @@ class MH:
             
             
 class CoarseNET:
-    '''Corsens an unweighted graph
+    '''
+    A class that implements the CoarseNET algorithm for an unweighted, 
+    undirected graph.
+
+    Attributes
+    ----------
+    G_coarse : networkx.Graph
+        Coarsened graph.
     
+    alpha : float
+        Shrinkage factor
     '''
     
-    def __init__(self,alpha,G):
-        '''Initializes coarsener 
+    def __init__(self,alpha: float,G: nx.Graph):
+        '''
+        Parameters
+        ----------
+        alpha : float
+            Shrinkage factor.
+
+        G : networkx.Graph
+            Graph to coarsen.
         '''
         self.alpha = alpha
         self.G = deepcopy(G)
@@ -452,17 +478,34 @@ class CoarseNET:
     @property
     def G(self):
         '''Original Graph
+
+        Returns
+        -------
+        G : networkx.Graph
+            The original graph to miniaturize
         '''
         return self._G
     
     @G.setter
-    def G(self,Graph):
+    def G(self,Graph: nx.Graph):
+        '''
+        Test
+        Parameters
+        ----------
+        Graph : networkx.Graph
+        '''
         #TODO: Validate strongly connected graph
         self._G = Graph
     
     @staticmethod
-    def adjacency(G):
-        '''Computes the adjacency matrix of a Graph
+    def adjacency(G: nx.Graph):
+        '''Returns the column-normalized adjacency matrix of
+        a graph.
+
+        Parameters
+        ----------
+        G : networkx.Graph
+            A graph to construct the adjacency matrix.
         '''
         A = nx.to_scipy_sparse_array(G)
         A = A._asfptype()
@@ -471,8 +514,14 @@ class CoarseNET:
         return A
     
     @staticmethod
-    def eigs(G):
-        '''Computes the dominant eigenvalue and eigenvectors of the Adjacency matrix of a graph
+    def eigs(G: nx.Graph):
+        '''Computes the dominant eigenvalue and eigenvectors
+        associated with the adjacency matrix of a graph.
+
+        Parameters
+        ----------
+        G : networkx.Graph
+            Graph to calculate eigenvalue and eigenvectors.
         '''
         # Adjacency Matrix
         A = CoarseNET.adjacency(G)
@@ -532,7 +581,8 @@ class CoarseNET:
         return contract
         
     def coarsen(self) -> None:
-        '''Coarsens the graph
+        '''
+        Coarsens the seed graph
         '''
         self.G_coarse_ = self._G.to_directed()
         n = self.G_coarse_.number_of_nodes()
