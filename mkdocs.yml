@@ -10,7 +10,7 @@ plugins:
                 options:
                     show_root_heading: false
                     show_root_toc_entry: false
-                    paths: [minigraphs]
+                    paths: [src]
 
 nav:
     - Home: index.md
