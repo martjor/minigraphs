@@ -5,3 +5,19 @@ theme: material
 plugins:
     - search 
     - mkdocstrings
+        handlers:
+            python:
+                options:
+                    show_root_heading: false
+                    show_root_toc_entry: false
+                    paths: [minigraphs]
+
+nav:
+    - Home: index.md
+    - Reference:
+        - Miniaturize: reference/miniaturize.md
+        - Simulation:   reference/simulation.md
+    # - Tutorial
+    # - How-to
+    # - Explanation
+
