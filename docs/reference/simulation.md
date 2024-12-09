@@ -1,6 +1,6 @@
 # Models Module
 
-::: minigraphs.simulation.models.simulation
+::: minigraphs.simulation.models.Simulation
     handler: python
 
 ::: minigraphs.simulation.models.Sir
