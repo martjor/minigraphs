@@ -3,7 +3,7 @@ import pandas as pd
 import yaml
 import shutil
 
-configfile: "config/config_grts.yaml"
+configfile: "config/config.yaml"
 wildcard_constraints:
     method="coarsening|sparsification"
 
@@ -29,14 +29,14 @@ def load_dict(rc_file):
         return yaml.safe_load(file)
 
 # Retrieve methods to analyze
-methods = config['methods'].keys()
+methods = ['sparsification','coarsening']
 
 # Generate the samples for each method
 samples = {method: generate_samples(config['methods'][method]) for method in methods}
 
 rule all:
     input:
-        expand("results/giant_hamsterster/{method}/plots/metrics_01.png",method=["sparsification","coarsening"])
+        "data/networks/hamsterster/miniaturization/graph_test_test/graph_adjacency.npz"
 
 rule summarize:
     input:
@@ -48,7 +48,7 @@ rule summarize:
 
 rule miniaturization_params:
     input:
-        "data/networks/{graph}/metrics.yaml"
+        "data/networks/{graph}/giant/metrics.yaml"
     output:
         "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
     resources:
@@ -63,7 +63,7 @@ rule miniaturization_params:
 
 rule miniaturization:
     input:
-        "data/networks/{graph}/metrics.yaml",
+        "data/networks/{graph}/giant/metrics.yaml",
         "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
     output:
         "data/networks/{graph}/miniaturization/graph_{id}_{idx}/graph_adjacency.npz",
