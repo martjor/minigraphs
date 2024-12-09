@@ -79,26 +79,50 @@ class Switch(Change):
         G.add_edge(old[0],old[1])
 
 class MH:
-    '''An MH-based annealer to miniaturize a graph
+    """
+    An MH-based annealer to miniaturize a graph.
     
-    Attritubes:
-        - metrics_dict: A dictionary of function handles used by the annealer to
-          calculate the functio metrics
-          
-        - beta: The initial inverse temperature of the replica
-        
-        - graph_: The generated miniature
-    '''
+    Attributes
+    ----------
+    schedule : callable
+        The annealing schedule of the MH algorithm.
+
+    weigths: dict of str to float
+        Dictionary of associated with each target metric.
+
+    graph_ : networkx.Graph
+        The generated graph miniature.
+    """
 
     def __init__(self,
-                 metrics,
+                 metrics: dict [str, Callable],
                  schedule: Callable | None = None, 
-                 weights=None,
+                 weights: dict [str, float ] = None,
                  n_changes: int = 1,
-                 func_loss = None,
+                 func_loss: Callable = None,
                  ):
-        '''Instantiates the MH annealer
-        '''
+        """
+        Parameters
+        ----------
+        metrics : dict of str to callable
+            Dictionary containing the functions used to evaluate the graph 
+            metrics.
+
+        schedule : callable
+            A function that returns the value of the inverse temperature at
+            every iteration.
+
+        weights :  dict of str to float
+            Dictionary containing the relative weights of every graph metric.
+
+        n_changes : int
+            Number of changes implemented at each iteration.
+
+        func_loss : callable
+            A callable that will take a list of weights and a list of differences
+            in graph metrics and evaluate the loss.
+        """
+
         # Store Annealing schedule
         if schedule is None:
             self.schedule = self.__schedule_adaptive
@@ -250,13 +274,35 @@ class MH:
 
             
     def transform(self, 
-                  graph_seed, 
-                  targets,
-                  n_iterations=None,
-                  epsilon=None,
-                  beta: int=None,
-                  verbose=False) -> None:
-        '''Miniaturizes seed graph
+                  graph_seed: nx.Graph, 
+                  targets: dict[str,float],
+                  n_iterations: int = None,
+                  epsilon: float = None,
+                  beta: float = None,
+                  verbose: bool = False) -> None:
+        '''
+        Miniaturizes seed graph
+
+        Parameters
+        ----------
+        graph_seed: nx.Graph
+            The initial graph to optimize.
+
+        targets: dict of str to float
+            Dictionary containing the graph metrics to target.
+
+        n_iterations: int
+            Number of iterations the annealer will be run for.
+        
+        epsilon: float
+            Tolerance value to determine metrics convergence. 
+
+        beta: float
+            Initial inverse-temperature to be used in the automatic
+            scheduling.
+
+        verbose: bool
+            Flat indicating whether or not to print progress.
         '''
         if (n_iterations is None) and (epsilon is None):
             raise ValueError("Exactly one stopping criterion must be provided")
