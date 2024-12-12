@@ -2,9 +2,9 @@ name: Build Documentation using MkDocs
 
 on: 
   push:
-    branches: [project]
+    branches: [main]
   pull_request:
-    branches: [project]
+    branches: [main]
 
 jobs:
   build:
@@ -13,8 +13,8 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v2
-        with: 
-          ref: project
+        # with: 
+        #   ref: project
       
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
