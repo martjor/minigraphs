@@ -8,13 +8,45 @@ wildcard_constraints:
     method="coarsening|sparsification"
 
 def cartesian_product(*arrays):
+    '''Generates a cartesian product from a group of arrays.
+
+    Parameters
+    ----------
+        arrays : np.ndarray or list
+            A sequence of arrays.
+    
+    Returns
+    -------
+        cart_prod : np.ndarray
+            2D numpy array containing all possible combinations of values
+            from the individual arrays.
+    '''
     meshgrids = np.meshgrid(*arrays,indexing='ij')
     cart_prod = np.stack(meshgrids,axis=-1)
     cart_prod = cart_prod.reshape(-1,len(arrays))
     return cart_prod
 
 def generate_samples(method_config):
-    '''Generates the samples for the method
+    '''Generates the samples for the method.
+
+    Generates the set of parameters used to generate each graph reduction,
+    based on the specified values for each individual parameters. The 
+    resulting sets of parameters are equivalent to a cartesian products over
+    the values of each indivial parameter.
+
+    Parameters
+    ----------
+        method_config : dict of str to str
+            Dictionary of 'values' for each parameter. Keys correspond
+            to the name of the parameter used by the generator, while
+            the corresponding values are strings specifying a numpy 
+            operation to generate the vector of values for the parameter.
+
+    Returns
+    -------
+        samples : pandas.DataFrame
+            Dataframe with reduction parameters for each graph, indexed 
+            by the graph id.
     '''
     samples = cartesian_product(eval(*method_config['parameters'].values()))
     samples = np.tile(samples,(method_config['n_graphs'],1))
@@ -24,9 +56,23 @@ def generate_samples(method_config):
 
     return samples
 
-def load_dict(rc_file):
-    with open(rc_file,'r') as file:
-        return yaml.safe_load(file)
+def load_dict(file):
+    '''Loads a dictionary from a YAML file.
+
+    Parameters
+    ----------
+        file : str
+            Path to YAML file containing the dictionary.
+
+    Returns
+    -------
+        dic : dict
+            Dictionary read from file.
+    '''
+    with open(file,'r') as f:
+        dic = yaml.safe_load(f)
+
+    return dic
 
 # Retrieve methods to analyze
 methods = ['sparsification','coarsening']
