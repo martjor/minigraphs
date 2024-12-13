@@ -279,7 +279,17 @@ rule draw_reductions:
         for file,name in zip(input.files,params.names):
             shutil.copy(file,os.path.join(output[0],f"{name}.png"))
 
-rule get_gexf:
+rule gexf:
+    '''Generates a gexf file of a graph.
+
+    Stores the graph in the .gexf format compatible with gephi.
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of a grpah.
+
+    Output:
+        - .gexf file of the graph.
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
