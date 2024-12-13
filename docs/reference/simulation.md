@@ -1,10 +1,10 @@
-# Models Module
+# Simulation Module
 
 ::: minigraphs.simulation.models.Simulation
     handler: python
 
 ::: minigraphs.simulation.models.Sir
     handler: python
-
-::: minigraphs.simulation.models.DeGroot
-    handler: python
+    options:
+        members:
+            - "__init__"
