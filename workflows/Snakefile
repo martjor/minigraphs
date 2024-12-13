@@ -195,7 +195,18 @@ rule distribution_metrics:
     script:
         "scripts/graph_distribution_metrics.py"
 
-rule model_simulate:
+rule simulate:
+    '''Simulates the diffusion model on the graph.
+
+    For the SIR model, the trajectories returned by the rule are the 
+    normalized populations for each compartment at every iteration.
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph.
+
+    Output:
+        - Numpy Array containing the relevant trajectories of the model.
+    '''
     input:
         "{path}/graph_adjacency.npz",
     output:
