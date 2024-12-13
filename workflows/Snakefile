@@ -109,7 +109,16 @@ rule miniaturization:
         " --log-file {log[0]}"
 
 
-rule graph_reduce:
+rule reduce:
+    '''Reduce a graph via coarsening or sparsification
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph to reduce
+    
+    Output:
+        - Scipy Sparse Array containing the adjacency matrix of the reduced graph
+        - YAML file containing the set of parameters used to reduce the graph
+    '''
     input:
         "data/networks/{graph}/graph_adjacency.npz",
     output:
