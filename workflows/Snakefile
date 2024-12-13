@@ -75,14 +75,17 @@ def load_dict(file):
     return dic
 
 # Retrieve methods to analyze
-methods = ['sparsification','coarsening']
+methods = config['methods'].keys()
 
 # Generate the samples for each method
 samples = {method: generate_samples(config['methods'][method]) for method in methods}
 
 rule all:
     input:
-        "data/networks/hamsterster/giant/sparsification/graph_0/graph_adjacency.npz"
+        [f"data/networks/hamsterster/giant/{method}/{graph_idx}/{file}" for method in methods \
+            for graph_idx in samples[method].index \
+            for file in ["graph_adjacency.npz"]]
+        
 
 rule reduce:
     '''Reduce a graph dataset.
