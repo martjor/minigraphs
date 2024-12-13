@@ -162,8 +162,12 @@ rule distribution:
     nodes is calculated. 
 
     Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph
 
     Output:
+        - 2-D Numpy Array representing the PDF of the specified property.
+          The first column contains that the prroperty takes. The second
+          column are the frequencies for each value.
     '''
     input:
         "{path}/graph_adjacency.npz"
