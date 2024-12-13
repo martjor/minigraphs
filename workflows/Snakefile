@@ -110,7 +110,10 @@ rule miniaturization:
 
 
 rule reduce:
-    '''Reduce a graph via coarsening or sparsification
+    '''Reduce a graph dataset.
+
+    This rule reduces the graph dataset using via sparsification or coarsening, 
+    depending on the wildcard specified. 
 
     Input:
         - Scipy Sparse Array containing the adjacency matrix of the graph to reduce
