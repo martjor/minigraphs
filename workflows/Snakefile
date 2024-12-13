@@ -8,13 +8,45 @@ wildcard_constraints:
     method="coarsening|sparsification"
 
 def cartesian_product(*arrays):
+    '''Generates a cartesian product from a group of arrays.
+
+    Parameters
+    ----------
+        arrays : np.ndarray or list
+            A sequence of arrays.
+    
+    Returns
+    -------
+        cart_prod : np.ndarray
+            2D numpy array containing all possible combinations of values
+            from the individual arrays.
+    '''
     meshgrids = np.meshgrid(*arrays,indexing='ij')
     cart_prod = np.stack(meshgrids,axis=-1)
     cart_prod = cart_prod.reshape(-1,len(arrays))
     return cart_prod
 
 def generate_samples(method_config):
-    '''Generates the samples for the method
+    '''Generates the samples for the method.
+
+    Generates the set of parameters used to generate each graph reduction,
+    based on the specified values for each individual parameters. The 
+    resulting sets of parameters are equivalent to a cartesian products over
+    the values of each indivial parameter.
+
+    Parameters
+    ----------
+        method_config : dict of str to str
+            Dictionary of 'values' for each parameter. Keys correspond
+            to the name of the parameter used by the generator, while
+            the corresponding values are strings specifying a numpy 
+            operation to generate the vector of values for the parameter.
+
+    Returns
+    -------
+        samples : pandas.DataFrame
+            Dataframe with reduction parameters for each graph, indexed 
+            by the graph id.
     '''
     samples = cartesian_product(eval(*method_config['parameters'].values()))
     samples = np.tile(samples,(method_config['n_graphs'],1))
@@ -24,9 +56,23 @@ def generate_samples(method_config):
 
     return samples
 
-def load_dict(rc_file):
-    with open(rc_file,'r') as file:
-        return yaml.safe_load(file)
+def load_dict(file):
+    '''Loads a dictionary from a YAML file.
+
+    Parameters
+    ----------
+        file : str
+            Path to YAML file containing the dictionary.
+
+    Returns
+    -------
+        dic : dict
+            Dictionary read from file.
+    '''
+    with open(file,'r') as f:
+        dic = yaml.safe_load(f)
+
+    return dic
 
 # Retrieve methods to analyze
 methods = ['sparsification','coarsening']
@@ -109,7 +155,19 @@ rule miniaturization:
         " --log-file {log[0]}"
 
 
-rule graph_reduce:
+rule reduce:
+    '''Reduce a graph dataset.
+
+    This rule reduces the graph dataset using via sparsification or coarsening, 
+    depending on the wildcard specified. 
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph to reduce
+    
+    Output:
+        - Scipy Sparse Array containing the adjacency matrix of the reduced graph
+        - YAML file containing the set of parameters used to reduce the graph
+    '''
     input:
         "data/networks/{graph}/graph_adjacency.npz",
     output:
@@ -127,7 +185,15 @@ rule graph_reduce:
     script:
         "scripts/graph_reduce.py"
 
-rule graph_metrics:
+rule characterize:
+    '''Characterizes a graph by calculating its relevant metrics
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph
+    
+    Output:
+        - YAML file containing the network metrics of the graph
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
@@ -135,7 +201,20 @@ rule graph_metrics:
     script:
         "scripts/graph_characterize.py"
 
-rule graph_distribution:
+rule distribution:
+    '''Calculates the distribution over some node property
+
+    The degree distribution of the pairwise-distance distribution of graph
+    nodes is calculated. 
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph
+
+    Output:
+        - 2-D Numpy Array representing the PDF of the specified property.
+          The first column contains that the prroperty takes. The second
+          column are the frequencies for each value.
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
@@ -143,7 +222,18 @@ rule graph_distribution:
     script:
         "scripts/graph_distribution.py"
 
-rule graph_distribution_metrics:
+rule distribution_metrics:
+    '''Calculates metrics from the specified distribution. 
+
+    Calculates relevant measures of central tendency as well as some 
+    low order moments of the distribution.
+
+    Input:
+        - Numpy Array containing the distribution.
+
+    Output:
+        - YAML file containing the requested metrics.
+    '''
     input:
         "{path}/distribution_{quantity}.npy"
     output:
@@ -151,7 +241,18 @@ rule graph_distribution_metrics:
     script:
         "scripts/graph_distribution_metrics.py"
 
-rule model_simulate:
+rule simulate:
+    '''Simulates the diffusion model on the graph.
+
+    For the SIR model, the trajectories returned by the rule are the 
+    normalized populations for each compartment at every iteration.
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph.
+
+    Output:
+        - Numpy Array containing the relevant trajectories of the model.
+    '''
     input:
         "{path}/graph_adjacency.npz",
     output:
@@ -165,7 +266,15 @@ rule model_simulate:
     script:
         "scripts/simulation_{wildcards.model}_run.py"
 
-rule model_plot:
+rule plot_sir:
+    '''Plots the trajectories of the SIR model.
+
+    Input:
+        - Numpy Array of SIR trajectories.
+
+    Output:
+        - PNG file with an SIR plot.
+    '''
     input:
         "{path}/trajectories_sir.npy"
     output:
@@ -173,7 +282,18 @@ rule model_plot:
     script:
         "scripts/sir_plot.py"
 
-rule model_qois_sir:
+rule qois_sir:
+    '''Calculates the Quantities of Interest of the SIR model.
+
+    The QOIs include total epidemic size, peak of number of infected
+    people, and time-to-peak.
+
+    Input:
+        - Numpy array of SIR trajectories.
+
+    Output:
+        - YAML file with the QOIs of the SIR model.
+    '''
     input:
         "{path}/trajectories_sir.npy"
     output:
@@ -205,7 +325,17 @@ rule draw_reductions:
         for file,name in zip(input.files,params.names):
             shutil.copy(file,os.path.join(output[0],f"{name}.png"))
 
-rule get_gexf:
+rule gexf:
+    '''Generates a gexf file of a graph.
+
+    Stores the graph in the .gexf format compatible with gephi.
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of a grpah.
+
+    Output:
+        - .gexf file of the graph.
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
@@ -268,7 +398,18 @@ rule plot_reduction:
     notebook:
         "notebooks/analysis_reduction.py.ipynb"
 
-rule graph_draw:
+rule plot_graph:
+    '''Creates a visualization of the graph dataset.
+
+    Utilizes the ForceAtlas2 algorithm to generate the layout on the graph
+    and draw it on a plane.
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph.
+
+    Output:
+        - PNG file with a visualization of the graph dataset
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
