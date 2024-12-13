@@ -352,7 +352,18 @@ rule plot_reduction:
     notebook:
         "notebooks/analysis_reduction.py.ipynb"
 
-rule graph_draw:
+rule plot_graph:
+    '''Creates a visualization of the graph dataset.
+
+    Utilizes the ForceAtlas2 algorithm to generate the layout on the graph
+    and draw it on a plane.
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph.
+
+    Output:
+        - PNG file with a visualization of the graph dataset
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
