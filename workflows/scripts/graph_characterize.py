@@ -34,9 +34,10 @@ graph = nx.from_scipy_sparse_array(adjacency)
 # CALCULATE METRICS
 components = graph_components(graph)
 
+# Calculate eigenvalues
 evals,_ = eigs(adjacency,2)
-print(evals)
 
+# Evaluate metrics
 metrics = {metric: func(graph) for metric, func in functions.items()}
 metrics['n_components'] = len(components)
 metrics['connectivity'] = components[0].number_of_nodes() / graph.number_of_nodes()

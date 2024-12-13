@@ -1,4 +1,4 @@
-site_name: Metropolis-Hastings Graph Miniaturization
+site_name: Graph Miniaturization
 
 theme: material
 
@@ -25,6 +25,13 @@ plugins:
                         - "!^__(?!init__$)"
                         
                     #show_root_toc_entry: false
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 
 
