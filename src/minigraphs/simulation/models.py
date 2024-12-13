@@ -4,8 +4,16 @@ import abc
 from sklearn.preprocessing import normalize
 
 class Simulation:
-    def __init__(self,adjacency):
-        '''Initializes the simulation object on an adjacency matrix
+    '''Simulates a diffusion model over a graph.
+    '''
+    def __init__(self,
+                 adjacency):
+        '''
+
+        Parameters
+        ----------
+        adjacency : Sparse Array
+            Adjacency matrix of the graph
         '''
         self._A = adjacency
         
@@ -26,7 +34,16 @@ class Simulation:
     def adjacency(self):
         return self._A.copy()
         
-    def run(self,model, n_steps: int):
+    def run(self,model, n_steps: int) -> None:
+        '''
+        Parameters
+        ----------
+        model : model
+            Diffusion model to be run on the graph.
+
+        n_steps : int
+            Number of iterations the model will be run for
+        '''
         # Check model formulation
         n_trajectories, self.columns_ = model.spec(self._A)
         
@@ -80,8 +97,23 @@ class DeGroot:
         
               
 class Sir:
-    def __init__(self,tau: float,gamma: float, n_infected: int = 1):
-        '''Initialilzes the sir simulation object
+    '''Model object for the SIR diffusion model.
+    '''
+    def __init__(self,
+                 tau: float,
+                 gamma: float, 
+                 n_infected: int = 1):
+        '''
+        Parameters
+        ----------
+        tau : float
+            Proability of infection
+
+        gamma : float
+            Probability of recovery
+        
+        n_infected : int 
+            Initial number of infections
         '''
         #TODO: Implement check for bounds 
         self.tau = tau 
