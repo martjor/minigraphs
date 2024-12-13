@@ -236,7 +236,18 @@ rule plot_sir:
     script:
         "scripts/sir_plot.py"
 
-rule model_qois_sir:
+rule qois_sir:
+    '''Calculates the Quantities of Interest of the SIR model.
+
+    The QOIs include total epidemic size, peak of number of infected
+    people, and time-to-peak.
+
+    Input:
+        - Numpy array of SIR trajectories.
+
+    Output:
+        - YAML file with the QOIs of the SIR model.
+    '''
     input:
         "{path}/trajectories_sir.npy"
     output:
