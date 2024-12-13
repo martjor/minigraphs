@@ -220,7 +220,15 @@ rule simulate:
     script:
         "scripts/simulation_{wildcards.model}_run.py"
 
-rule model_plot:
+rule plot_sir:
+    '''Plots the trajectories of the SIR model.
+
+    Input:
+        - Numpy Array of SIR trajectories.
+
+    Output:
+        - PNG file with an SIR plot.
+    '''
     input:
         "{path}/trajectories_sir.npy"
     output:
