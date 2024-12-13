@@ -84,7 +84,11 @@ rule all:
     input:
         [f"data/networks/hamsterster/giant/{method}/{graph_idx}/{file}" for method in methods \
             for graph_idx in samples[method].index \
-            for file in ["graph_adjacency.npz"]]
+            for file in ["graph_adjacency.npz",
+                         "graph_metrics.yaml",
+                         "qois_sir.yaml",
+                         "distribution_degree.yaml",
+                         "distribution_distance.yaml"]]
         
 
 rule reduce:
