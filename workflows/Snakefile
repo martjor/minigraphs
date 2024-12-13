@@ -152,7 +152,16 @@ rule characterize:
     script:
         "scripts/graph_characterize.py"
 
-rule graph_distribution:
+rule distribution:
+    '''Calculates the distribution over some node property
+
+    The degree distribution of the pairwise-distance distribution of graph
+    nodes is calculated. 
+
+    Input:
+
+    Output:
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
