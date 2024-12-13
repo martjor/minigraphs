@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
 env:
-  PYTHON_VERSION: 3.6
+  PYTHON_VERSION: 3.11
 
 jobs:
   testing:
