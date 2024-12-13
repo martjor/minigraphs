@@ -296,24 +296,6 @@ rule collect_gexf:
         for file, name in zip(input.files,params.names):
             shutil.copy(file,os.path.join(output[0],f"{name}.gexf"))
 
-        
-
-
-# rule plot_graphs:
-#     input:
-#         original="data/networks/{graph}/drawing.png",
-#         reductions=expand("data/networks/{{graph}}/{{method}}/graph_{idx}/drawing.png",idx=[0,1])
-#     output:
-#         original="results/{graph}/
-#         directory("results/{graph}/{method}/graphs/")
-#     shell:
-#         """
-#         mkdir -p   {output[0]}
-#         for i in {input}; do
-#             cp $i {output[0]}
-#         done
-#         """
-
 rule plot_reduction:
     input:
         expand("results/{{graph}}/{{method}}/{file}.csv",
