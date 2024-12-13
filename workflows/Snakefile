@@ -176,7 +176,18 @@ rule distribution:
     script:
         "scripts/graph_distribution.py"
 
-rule graph_distribution_metrics:
+rule distribution_metrics:
+    '''Calculates metrics from the specified distribution. 
+
+    Calculates relevant measures of central tendency as well as some 
+    low order moments of the distribution.
+
+    Input:
+        - Numpy Array containing the distribution.
+
+    Output:
+        - YAML file containing the requested metrics.
+    '''
     input:
         "{path}/distribution_{quantity}.npy"
     output:
