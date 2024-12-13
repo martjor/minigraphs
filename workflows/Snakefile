@@ -84,13 +84,7 @@ rule all:
     input:
         "data/networks/hamsterster/miniaturization/graph_test_test/graph_adjacency.npz"
 
-rule summarize:
-    input:
-        files=lambda w:[f"data/networks/{w.graph}/{w.method}/{idx}/{w.file}.yaml" for idx in samples[w.method].index]
-    output:
-        "results/{graph}/{method}/{file}.csv"
-    script:
-        "scripts/summarize.py"
+
 
 
 
@@ -251,19 +245,7 @@ rule draw_original:
         mv {input[0]} {output[0]}
         """
 
-rule draw_reductions:
-    input:
-        files=lambda w: [f"data/networks/{w.graph}/{w.method}/{graph_idx}/drawing.png" for graph_idx in samples[w.method].index]
-    output:
-        directory("results/{graph}/{method}/drawings/")
-    params:
-        names=lambda w: samples[w.method].index        
-    run:
-        os.makedirs(output[0],exist_ok=True)
 
-        # Move files
-        for file,name in zip(input.files,params.names):
-            shutil.copy(file,os.path.join(output[0],f"{name}.png"))
 
 rule gexf:
     '''Generates a gexf file of a graph.
@@ -299,44 +281,9 @@ rule collect_gexf:
         
 
 
-# rule plot_graphs:
-#     input:
-#         original="data/networks/{graph}/drawing.png",
-#         reductions=expand("data/networks/{{graph}}/{{method}}/graph_{idx}/drawing.png",idx=[0,1])
-#     output:
-#         original="results/{graph}/
-#         directory("results/{graph}/{method}/graphs/")
-#     shell:
-#         """
-#         mkdir -p   {output[0]}
-#         for i in {input}; do
-#             cp $i {output[0]}
-#         done
-#         """
 
-rule plot_reduction:
-    input:
-        expand("results/{{graph}}/{{method}}/{file}.csv",
-            file=["params_reduction",
-                  "graph_metrics",
-                  "distribution_degree",
-                  "distribution_distance",
-                  "qois_sir"]),
-        metrics="data/networks/{graph}/graph_metrics.yaml",
-        d_degree="data/networks/{graph}/distribution_degree.yaml",
-        d_distance="data/networks/{graph}/distribution_distance.yaml",
-        qois_sir="data/networks/{graph}/qois_sir.yaml"
-    output:
-        expand("results/{{graph}}/{{method}}/plots/{file}.png",
-            file=["metrics_01",
-                   "metrics_02",
-                   "moments",
-                   "sir",
-                   "degroot"])
-    params:
-        rc=load_dict(config['rc_file'])
-    notebook:
-        "notebooks/analysis_reduction.py.ipynb"
+
+
 
 rule plot_graph:
     '''Creates a visualization of the graph dataset.
