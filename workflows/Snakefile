@@ -136,7 +136,15 @@ rule reduce:
     script:
         "scripts/graph_reduce.py"
 
-rule graph_metrics:
+rule characterize:
+    '''Characterizes a graph by calculating its relevant metrics
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph
+    
+    Output:
+        - YAML file containing the network metrics of the graph
+    '''
     input:
         "{path}/graph_adjacency.npz"
     output:
