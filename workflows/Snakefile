@@ -86,67 +86,7 @@ rule all:
 
 
 
-rule miniaturization_params:
-    '''Calculates the optimal miniaturization parameters of a graph
-    
-    Input:
-        - YAML file containing the metrics of the graphs to miniaturize
 
-    Output:
-        - YAML file containg the optimal weights and inverse temperature to miniaturize
-          the graph to the specified size
-    '''
-    input:
-        "data/networks/{graph}/giant/metrics.yaml"
-    output:
-        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
-    resources:
-        runtime=10,
-        mem_mb=2000
-    conda:
-        "envs/miniaturize.yaml"
-    log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
-    script:
-        "scripts/miniaturization_params.py"
-
-rule miniaturization:
-    '''Miniaturizes a graph using the parallel tempering algorithm
-
-    Input:
-        - YAML file containing the of the graph
-        - YAML file containing the miniaturization weights and inverse temperature
-    
-    Output:
-        - Scipy Sparse Array representing the adjacency matrix of the miniature
-        - Directory of parquet files containing the individual trajectories of each
-          replica of the parallel tempering algorithm
-    '''
-    input:
-        "data/networks/{graph}/giant/metrics.yaml",
-        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
-    output:
-        "data/networks/{graph}/miniaturization/graph_{id}_{idx}/graph_adjacency.npz",
-        directory("data/networks/{graph}/miniaturization/graph_{id}_{idx}/trajectories")
-    params:
-        shrinkage=0.9,
-        n_changes=10,
-        n_steps=1000,
-        n_substeps=50
-    resources:
-        runtime=60,
-        mem_mb=2000,
-        tasks=6,
-        mpi="mpiexec"
-    log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/graph_{idx}_min.log"
-    shell:
-        "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"
-        " --n_changes {params.n_changes}"
-        " --n_steps {params.n_steps}"
-        " --n_substeps {params.n_substeps}"
-        " --log-file {log[0]}"
 
 
 rule reduce:
