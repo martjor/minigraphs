@@ -92,7 +92,7 @@ rule miniaturization_params:
           the graph to the specified size
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml"
+        "data/networks/{graph}/metrics.yaml"
     output:
         "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
     resources:
@@ -103,7 +103,7 @@ rule miniaturization_params:
     log:
         "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
     params:
-        params=lambda w:samples['miniaturization'].loc[w.id]
+        params=lambda w:samples['miniaturization'].loc[int(w.id)]
     script:
         "scripts/miniaturization_params.py"
 
@@ -120,7 +120,7 @@ rule miniaturization:
           replica of the parallel tempering algorithm
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml",
+        "data/networks/{graph}/metrics.yaml",
         lambda w: f"data/networks/{w.graph}/miniaturization/parameters_{int(w.idx) // config['methods']['miniaturization']['n_graphs']}.yaml"
     output:
         "data/networks/{graph}/miniaturization/graph_{idx}/graph_adjacency.npz",
