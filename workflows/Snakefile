@@ -49,10 +49,7 @@ def generate_samples(method_config):
             by the graph id.
     '''
     samples = cartesian_product(eval(*method_config['parameters'].values()))
-    samples = np.tile(samples,(method_config['n_graphs'],1))
-
     samples = pd.DataFrame(samples,columns=method_config['parameters'].keys())
-    samples.rename(lambda idx: f"graph_{idx}", inplace=True)
 
     return samples
 
