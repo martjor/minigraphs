@@ -102,6 +102,8 @@ rule miniaturization_params:
         "envs/miniaturize.yaml"
     log:
         "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
+    params:
+        params=lambda w:samples['miniaturization'].loc[w.id]
     script:
         "scripts/miniaturization_params.py"
 
@@ -119,7 +121,7 @@ rule miniaturization:
     '''
     input:
         "data/networks/{graph}/giant/metrics.yaml",
-        lambda w: f"data/networks/{w.graph}/miniaturization/parameters_{int(idx) // config['methods']['miniaturization']['n_graphs']}.yaml"
+        lambda w: f"data/networks/{w.graph}/miniaturization/parameters_{int(w.idx) // config['methods']['miniaturization']['n_graphs']}.yaml"
     output:
         "data/networks/{graph}/miniaturization/graph_{idx}/graph_adjacency.npz",
         directory("data/networks/{graph}/miniaturization/graph_{idx}/trajectories")
@@ -134,7 +136,7 @@ rule miniaturization:
         tasks=6,
         mpi="mpiexec"
     log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/graph_{idx}_min.log"
+        "logs/{graph}/reduction/miniaturization/graph_{idx}.log"
     shell:
         "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
         " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"
