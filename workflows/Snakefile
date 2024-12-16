@@ -76,7 +76,7 @@ methods = config['methods'].keys()
 
 # Generate the samples for each method
 samples = {method: generate_samples(config['methods'][method]['parameters']) for method in methods}
-print(samples['miniaturization'])
+
 rule all:
     input:
         expand("data/networks/hamsterster/giant/miniaturization/parameters_{id}.yaml",id=range(samples['miniaturization'].shape[0]))
