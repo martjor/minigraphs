@@ -76,10 +76,10 @@ methods = config['methods'].keys()
 
 # Generate the samples for each method
 samples = {method: generate_samples(config['methods'][method]['parameters']) for method in methods}
-
+print(samples['miniaturization'])
 rule all:
     input:
-        "data/networks/hamsterster/giant/miniaturization/graph_0/graph_adjacency.npz"
+        expand("data/networks/hamsterster/giant/miniaturization/parameters_{id}.yaml",id=range(samples['miniaturization'].shape[0]))
         
 rule miniaturization_params:
     '''Calculates the optimal miniaturization parameters of a graph
