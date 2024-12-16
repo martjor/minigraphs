@@ -26,7 +26,7 @@ def cartesian_product(*arrays):
     cart_prod = cart_prod.reshape(-1,len(arrays))
     return cart_prod
 
-def generate_samples(method_config):
+def generate_samples(params):
     '''Generates the samples for the method.
 
     Generates the set of parameters used to generate each graph reduction,
@@ -48,8 +48,8 @@ def generate_samples(method_config):
             Dataframe with reduction parameters for each graph, indexed 
             by the graph id.
     '''
-    samples = cartesian_product(eval(*method_config['parameters'].values()))
-    samples = pd.DataFrame(samples,columns=method_config['parameters'].keys())
+    samples = cartesian_product(*[eval(val) for val in params.values()])
+    samples = pd.DataFrame(samples,columns=params.keys())
 
     return samples
 
@@ -75,7 +75,7 @@ def load_dict(file):
 methods = config['methods'].keys()
 
 # Generate the samples for each method
-samples = {method: generate_samples(config['methods'][method]) for method in methods}
+samples = {method: generate_samples(config['methods'][method]['parameters']) for method in methods}
 
 rule all:
     input:
