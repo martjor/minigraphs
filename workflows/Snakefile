@@ -26,7 +26,7 @@ def cartesian_product(*arrays):
     cart_prod = cart_prod.reshape(-1,len(arrays))
     return cart_prod
 
-def generate_samples(method_config):
+def generate_samples(params):
     '''Generates the samples for the method.
 
     Generates the set of parameters used to generate each graph reduction,
@@ -48,11 +48,8 @@ def generate_samples(method_config):
             Dataframe with reduction parameters for each graph, indexed 
             by the graph id.
     '''
-    samples = cartesian_product(eval(*method_config['parameters'].values()))
-    samples = np.tile(samples,(method_config['n_graphs'],1))
-
-    samples = pd.DataFrame(samples,columns=method_config['parameters'].keys())
-    samples.rename(lambda idx: f"graph_{idx}", inplace=True)
+    samples = cartesian_product(*[eval(val) for val in params.values()])
+    samples = pd.DataFrame(samples,columns=params.keys())
 
     return samples
 
@@ -78,17 +75,11 @@ def load_dict(file):
 methods = config['methods'].keys()
 
 # Generate the samples for each method
-samples = {method: generate_samples(config['methods'][method]) for method in methods}
+samples = {method: generate_samples(config['methods'][method]['parameters']) for method in methods}
 
 rule all:
     input:
-        [f"data/networks/hamsterster/giant/{method}/{graph_idx}/{file}" for method in methods \
-            for graph_idx in samples[method].index \
-            for file in ["graph_adjacency.npz",
-                         "graph_metrics.yaml",
-                         "qois_sir.yaml",
-                         "distribution_degree.yaml",
-                         "distribution_distance.yaml"]]
+        expand("data/networks/hamsterster/giant/miniaturization/parameters_{id}.yaml",id=range(samples['miniaturization'].shape[0]))
         
 rule miniaturization_params:
     '''Calculates the optimal miniaturization parameters of a graph
@@ -101,7 +92,7 @@ rule miniaturization_params:
           the graph to the specified size
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml"
+        "data/networks/{graph}/metrics.yaml"
     output:
         "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
     resources:
@@ -111,6 +102,9 @@ rule miniaturization_params:
         "envs/miniaturize.yaml"
     log:
         "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
+    params:
+        params=lambda w:samples['miniaturization'].loc[int(w.id)],
+        n_trials=30
     script:
         "scripts/miniaturization_params.py"
 
@@ -127,11 +121,11 @@ rule miniaturization:
           replica of the parallel tempering algorithm
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml",
-        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
+        "data/networks/{graph}/metrics.yaml",
+        lambda w: f"data/networks/{w.graph}/miniaturization/parameters_{int(w.idx) // config['methods']['miniaturization']['n_graphs']}.yaml"
     output:
-        "data/networks/{graph}/miniaturization/graph_{id}_{idx}/graph_adjacency.npz",
-        directory("data/networks/{graph}/miniaturization/graph_{id}_{idx}/trajectories")
+        "data/networks/{graph}/miniaturization/graph_{idx}/graph_adjacency.npz",
+        directory("data/networks/{graph}/miniaturization/graph_{idx}/trajectories")
     params:
         shrinkage=0.9,
         n_changes=10,
@@ -143,7 +137,7 @@ rule miniaturization:
         tasks=6,
         mpi="mpiexec"
     log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/graph_{idx}_min.log"
+        "logs/{graph}/reduction/miniaturization/graph_{idx}.log"
     shell:
         "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
         " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"

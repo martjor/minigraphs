@@ -146,7 +146,7 @@ class MH:
             raise ValueError("Specified weights don't match corresponding metrics")
         
         # Store number of changes per step
-        self.n_changes = n_changes
+        self.n_changes = int(n_changes)
         self.__window_size = 10
         
         # Store loss function
@@ -351,7 +351,7 @@ class MH:
         self.__E0 = self.__energy(self.__m0)
         
         # Initialize trajectories
-        size_history = n_iterations or 10000
+        size_history = int(n_iterations) or 10000
         self._trajectories_ = np.zeros((size_history,self._n_states+3))
         
         #  Begin optimization

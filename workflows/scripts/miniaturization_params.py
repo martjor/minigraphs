@@ -115,10 +115,11 @@ def weights(metrics_file,
     with open(params_file,'w') as file:
         yaml.dump(params.to_dict(),file,default_flow_style=False)
         
+params = snakemake.params.params
 weights(snakemake.input[0],
         snakemake.output[0],
-        0.9,
-        10,
-        30,
-        100)
+        params['alpha'],
+        params['n_changes'],
+        snakemake.params.n_trials,
+        params['n_steps'])
     
