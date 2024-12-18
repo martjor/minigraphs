@@ -56,7 +56,7 @@ def weights(metrics_file,
         print("Error: Invalid number of vertices in the miniature")
     
     print(f"Calculating parameters for graph at graph at {metrics_file}")
-    print(f"\t - Size: {n_vertices} nodes ({shrinkage:.02f * 100}% miniaturization)")
+    print(f"\t - Size: {n_vertices} nodes ({shrinkage*100:.02f}% miniaturization)")
     print(f"\t - Number iterations per sample: {n_iterations}")
     print(f"\t - Number of samples: {n_samples}\n")
 
@@ -121,5 +121,5 @@ weights(snakemake.input[0],
         params['alpha'],
         params['n_changes'],
         snakemake.params.n_trials,
-        params['n_steps'])
+        snakemake.params.n_steps)
     

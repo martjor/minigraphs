@@ -98,13 +98,12 @@ rule miniaturization_params:
     resources:
         runtime=10,
         mem_mb=2000
-    conda:
-        "envs/miniaturize.yaml"
     log:
         "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
     params:
         params=lambda w:samples['miniaturization'].loc[int(w.id)],
-        n_trials=30
+        n_trials=30,
+        n_steps=100
     script:
         "scripts/miniaturization_params.py"
 
@@ -136,6 +135,8 @@ rule miniaturization:
         mem_mb=2000,
         tasks=6,
         mpi="mpiexec"
+    conda:
+        "envs/miniaturize.yaml"
     log:
         "logs/{graph}/reduction/miniaturization/graph_{idx}.log"
     shell:
