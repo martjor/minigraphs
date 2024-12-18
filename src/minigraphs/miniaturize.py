@@ -283,7 +283,7 @@ class MH:
         '''
         return np.exp((E0-E1)*self.beta) >= np.random.uniform()
 
-    @validate_call
+    @validate_call(config={'arbitrary_types_allowed':True})
     def transform(self, 
                   graph_seed: nx.Graph, 
                   targets: dict[str,float],
