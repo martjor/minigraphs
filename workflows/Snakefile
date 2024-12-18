@@ -126,12 +126,9 @@ rule miniaturization:
         "data/networks/{graph}/miniaturization/graph_{idx}/graph_adjacency.npz",
         directory("data/networks/{graph}/miniaturization/graph_{idx}/trajectories")
     params:
-        shrinkage=0.9,
-        n_changes=10,
-        n_steps=1000,
-        n_substeps=50
+        params=lambda w:samples['miniaturization'].loc(int(w.id))
     resources:
-        runtime=60,
+        runtime=1440,
         mem_mb=2000,
         tasks=6,
         mpi="mpiexec"
@@ -142,9 +139,9 @@ rule miniaturization:
     shell:
         "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
         " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"
-        " --n_changes {params.n_changes}"
-        " --n_steps {params.n_steps}"
-        " --n_substeps {params.n_substeps}"
+        " --n_changes {params.params['n_changes']}"
+        " --n_steps {params.params['n_steps']}"
+        " --n_substeps {params.params['n_sub_steps']}"
         " --log-file {log[0]}"
 
 rule reduce:
