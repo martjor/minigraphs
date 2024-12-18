@@ -17,6 +17,7 @@ from typing import Callable
 import matplotlib.pyplot as plt
 from abc import ABC,abstractmethod
 from collections import deque
+from pydantic import BaseModel, validate_call
 
 NX_DENSITY = lambda G: nx.density(G)
 NX_CLUSTERING = lambda G: nx.average_clustering(G)
@@ -93,7 +94,7 @@ class MH:
     graph_ : networkx.Graph
         The generated graph miniature.
     """
-
+    @validate_call
     def __init__(self,
                  metrics: dict [str, Callable],
                  schedule: Callable | None = None, 
@@ -282,7 +283,7 @@ class MH:
         '''
         return np.exp((E0-E1)*self.beta) >= np.random.uniform()
 
-            
+    @validate_call
     def transform(self, 
                   graph_seed: nx.Graph, 
                   targets: dict[str,float],
@@ -351,7 +352,7 @@ class MH:
         self.__E0 = self.__energy(self.__m0)
         
         # Initialize trajectories
-        size_history = int(n_iterations) or 10000
+        size_history = n_iterations or 10000
         self._trajectories_ = np.zeros((size_history,self._n_states+3))
         
         #  Begin optimization
