@@ -12,6 +12,6 @@ setup(
         "scikit-learn",
         "networkx",
         "click",
-        "pydantic"
+        "pydantic<=2.8.0"
     ],
 )
