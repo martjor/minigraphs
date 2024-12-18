@@ -96,7 +96,7 @@ rule miniaturization_params:
     output:
         "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
     resources:
-        runtime=10,
+        runtime=400,
         mem_mb=2000
     log:
         "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
