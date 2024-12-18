@@ -1,4 +1,4 @@
-name: minigraphs_env
+name: miniaturize
 channels:
   - conda-forge
 dependencies:
@@ -12,5 +12,6 @@ dependencies:
   - mpi4py
   - pyyaml
   - pip:
-    - -e /mnt/home/martjor/repos/minigraphs/minigraphs
+    - -e /mnt/home/martjor/repos/minigraphs/src
+
   
