@@ -237,6 +237,14 @@ rule qois_sir:
     script:
         "scripts/model_qois_sir.py"
 
+rule draw_layout:
+    input:
+        "data/networks/{graph}/graph_adjacency.npz"
+    output:
+        "data/networks/{graph}/layout.yaml"
+    script:
+        "scripts/draw_layout.py"
+        
 rule draw_original:
     input:
         "data/networks/{graph}/drawing.png"
