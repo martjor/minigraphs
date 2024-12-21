@@ -79,7 +79,7 @@ samples = {method: generate_samples(config['methods'][method]['parameters']) for
 
 rule all:
     input:
-        expand("data/networks/hamsterster/giant/miniaturization/parameters_{id}.yaml",id=range(samples['miniaturization'].shape[0]))
+        expand("data/networks/hamsterster/giant/miniaturization/graph_{id}/graph_adjacency.npz",id=range(samples['miniaturization'].shape[0]))
         
 rule miniaturization_params:
     '''Calculates the optimal miniaturization parameters of a graph
@@ -126,7 +126,7 @@ rule miniaturization:
         "data/networks/{graph}/miniaturization/graph_{idx}/graph_adjacency.npz",
         directory("data/networks/{graph}/miniaturization/graph_{idx}/trajectories")
     params:
-        params=lambda w:samples['miniaturization'].loc(int(w.id))
+        params=lambda w:samples['miniaturization'].loc[int(w.idx)]
     resources:
         runtime=1440,
         mem_mb=2000,
@@ -138,7 +138,7 @@ rule miniaturization:
         "logs/{graph}/reduction/miniaturization/graph_{idx}.log"
     shell:
         "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"
+        " {input[0]} {input[1]} {output[0]} {output[1]} {params.params['alpha']}"
         " --n_changes {params.params['n_changes']}"
         " --n_steps {params.params['n_steps']}"
         " --n_substeps {params.params['n_sub_steps']}"
