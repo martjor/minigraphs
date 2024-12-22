@@ -5,7 +5,7 @@ import shutil
 
 configfile: "config/config.yaml"
 
-methods = ["miniaturization"]
+methods = ["sparsification"]
 miniatures = list(config['miniatures'].keys())
 
 rule all:
@@ -70,7 +70,7 @@ rule miniaturization:
     params:
         lambda w: config['miniatures'][w.miniature]
     resources:
-        runtime=1440,
+        runtime=30,
         mem_mb=2000,
         tasks=6,
         mpi="mpiexec"
