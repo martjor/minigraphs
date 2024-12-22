@@ -86,7 +86,6 @@ rule miniaturization_params:
     
     Input:
         - YAML file containing the metrics of the graphs to miniaturize
-<<<<<<< HEAD
 
     Output:
         - YAML file containg the optimal weights and inverse temperature to miniaturize
@@ -121,7 +120,6 @@ rule miniaturization:
           replica of the parallel tempering algorithm
     '''
     input:
-<<<<<<< HEAD
         "data/networks/{graph}/metrics.yaml",
         lambda w: f"data/networks/{w.graph}/miniaturization/parameters_{int(w.idx) // config['methods']['miniaturization']['n_graphs']}.yaml"
     output:
@@ -145,92 +143,6 @@ rule miniaturization:
         " --n_steps {params.params['n_steps']}"
         " --n_substeps {params.params['n_sub_steps']}"
         " --log-file {log[0]}"
-=======
-        "data/networks/{graph}/giant/metrics.yaml",
-        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
-    output:
-        "data/networks/{graph}/miniaturization/graph_{id}_{idx}/graph_adjacency.npz",
-        directory("data/networks/{graph}/miniaturization/graph_{id}_{idx}/trajectories")
-    params:
-        shrinkage=0.9,
-        n_changes=10,
-        n_steps=1000,
-        n_substeps=50
-    resources:
-        runtime=60,
-        mem_mb=2000,
-        tasks=6,
-        mpi="mpiexec"
-    log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/graph_{idx}_min.log"
-    shell:
-        "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"
-        " --n_changes {params.n_changes}"
-        " --n_steps {params.n_steps}"
-        " --n_substeps {params.n_substeps}"
-        " --log-file {log[0]}"
-
->>>>>>> 5b397fa (Resolve conflict)
-=======
-
-    Output:
-        - YAML file containg the optimal weights and inverse temperature to miniaturize
-          the graph to the specified size
-    '''
-    input:
-        "data/networks/{graph}/giant/metrics.yaml"
-    output:
-        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
-    resources:
-        runtime=10,
-        mem_mb=2000
-    conda:
-        "envs/miniaturize.yaml"
-    log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
-    script:
-        "scripts/miniaturization_params.py"
-
-rule miniaturization:
-    '''Miniaturizes a graph using the parallel tempering algorithm
-
-    Input:
-        - YAML file containing the of the graph
-        - YAML file containing the miniaturization weights and inverse temperature
-    
-    Output:
-        - Scipy Sparse Array representing the adjacency matrix of the miniature
-        - Directory of parquet files containing the individual trajectories of each
-          replica of the parallel tempering algorithm
-    '''
-    input:
-        "data/networks/{graph}/giant/metrics.yaml",
-        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
-    output:
-        "data/networks/{graph}/miniaturization/graph_{id}_{idx}/graph_adjacency.npz",
-        directory("data/networks/{graph}/miniaturization/graph_{id}_{idx}/trajectories")
-    params:
-        shrinkage=0.9,
-        n_changes=10,
-        n_steps=1000,
-        n_substeps=50
-    resources:
-        runtime=60,
-        mem_mb=2000,
-        tasks=6,
-        mpi="mpiexec"
-    log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/graph_{idx}_min.log"
-    shell:
-        "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"
-        " --n_changes {params.n_changes}"
-        " --n_steps {params.n_steps}"
-        " --n_substeps {params.n_substeps}"
-        " --log-file {log[0]}"
->>>>>>> c18d712 (Resolve merge conflict)
-
 rule reduce:
     '''Reduce a graph dataset.
 
@@ -405,29 +317,6 @@ rule gexf:
     script:
         "scripts/graph_gexf.py"
 
-<<<<<<< HEAD
-=======
-rule collect_gexf:  
-    input:
-        files=lambda w: [f"data/networks/{w.graph}/{w.method}/{graph_idx}/graph.gexf" for graph_idx in samples[w.method].index]
-    output:
-        directory("results/{graph}/{method}/gexf/")
-    params:
-        names=lambda w: samples[w.method].index
-    run:
-        os.makedirs(output[0],exist_ok=True)
-
-        for file, name in zip(input.files,params.names):
-            shutil.copy(file,os.path.join(output[0],f"{name}.gexf"))
-
-        
-
-
-
-
-
-
->>>>>>> fc31592 (RM: Aggregations)
 rule plot_graph:
     '''Creates a visualization of the graph dataset.
 
