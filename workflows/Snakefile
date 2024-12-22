@@ -120,6 +120,7 @@ rule miniaturization:
           replica of the parallel tempering algorithm
     '''
     input:
+<<<<<<< HEAD
         "data/networks/{graph}/metrics.yaml",
         lambda w: f"data/networks/{w.graph}/miniaturization/parameters_{int(w.idx) // config['methods']['miniaturization']['n_graphs']}.yaml"
     output:
@@ -143,6 +144,33 @@ rule miniaturization:
         " --n_steps {params.params['n_steps']}"
         " --n_substeps {params.params['n_sub_steps']}"
         " --log-file {log[0]}"
+=======
+        "data/networks/{graph}/giant/metrics.yaml",
+        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
+    output:
+        "data/networks/{graph}/miniaturization/graph_{id}_{idx}/graph_adjacency.npz",
+        directory("data/networks/{graph}/miniaturization/graph_{id}_{idx}/trajectories")
+    params:
+        shrinkage=0.9,
+        n_changes=10,
+        n_steps=1000,
+        n_substeps=50
+    resources:
+        runtime=60,
+        mem_mb=2000,
+        tasks=6,
+        mpi="mpiexec"
+    log:
+        "logs/{graph}/reduction/miniaturization/parameters_{id}/graph_{idx}_min.log"
+    shell:
+        "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
+        " {input[0]} {input[1]} {output[0]} {output[1]} {params.shrinkage}"
+        " --n_changes {params.n_changes}"
+        " --n_steps {params.n_steps}"
+        " --n_substeps {params.n_substeps}"
+        " --log-file {log[0]}"
+
+>>>>>>> 5b397fa (Resolve conflict)
 
 rule reduce:
     '''Reduce a graph dataset.
