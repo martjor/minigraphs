@@ -5,7 +5,7 @@ import shutil
 
 configfile: "config/config.yaml"
 
-methods = ["miniaturization", "coarsening", "sparsification"]
+methods = ["coarsening"]
 miniatures = list(config['miniatures'].keys())
 
 rule all:
@@ -76,33 +76,29 @@ rule miniaturization:
         " --n_steps {params.params['n_steps']}"
         " --n_substeps {params.params['n_sub_steps']}"
         " --log-file {log[0]}"
-rule reduce:
-    '''Reduce a graph dataset.
 
-    This rule reduces the graph dataset using via sparsification or coarsening, 
-    depending on the wildcard specified. 
+rule coarsen:
+    '''Coarsens a graph dataset
 
     Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph to reduce
+        - Scipy Sparse Array containing the adjacency matrix of the graph to coarsen
     
     Output:
         - Scipy Sparse Array containing the adjacency matrix of the reduced graph
-        - YAML file containing the set of parameters used to reduce the graph
     '''
     input:
         "data/networks/{graph}/graph_adjacency.npz",
     output:
-        "data/networks/{graph}/{method}/{graph_idx}/graph_adjacency.npz",
-        "data/networks/{graph}/{method}/{graph_idx}/params_reduction.yaml"
+        "data/networks/{graph}/coarsening/{miniature}/graph_adjacency.npz",
     log:
-        "logs/reduction_{graph}/{method}/{graph_idx}.log"
+        "logs/{graph}/reduction/coarsening/{miniature}.log"
     message:
-        "Reducing {wildcards.graph} ({wildcards.graph_idx}) using {wildcards.method}..."
+        "Coarsening graph '{wildcards.graph}' (wildcards.miniature)..."
     params:
-        method_parameters=lambda w: samples[w.method].loc[w.graph_idx].to_dict()
+        alpha=lambda w:config['miniatures'][w.miniature]['alpha']
     resources:
-        runtime=120,
-        mem_mb=1000
+        runtime=60,
+        mem_mb=2000
     script:
         "scripts/graph_reduce.py"
 
