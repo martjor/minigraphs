@@ -111,7 +111,30 @@ rule coarsen:
     script:
         "scripts/reduction/coarsen.py"
 
-rule characterize:
+rule sparsify:
+    '''Sparsifies a graph dataset
+
+    Input:
+        - Scipy Sparse Array with the adjacency matrix the graph to sparsify.
+    Output:
+        - Scipy Sparse Array with the adjacency matrix of the sparsified graph.
+    '''
+    input:
+        "data/networks/{graph}/graph_adjacency.npz",
+        "data/networks/{graph}/miniaturization/{miniature}/graph_metrics.yaml"
+    output:
+        "data/networks/{graph}/sparsification/{miniature}/graph_adjacency.npz"
+    log:
+        "logs/{graph}/sparsification/{miniature}/reduction.log"
+    message:
+        "Sparsifying graph '{wildcards.graph}' ({wildcards.miniature})..."
+    resources:
+        runtime=15,
+        mem_mb=2000
+    script:
+        "scripts/reduction/corasen.py"
+
+rule metrics:
     '''Characterizes a graph by calculating its relevant metrics
 
     Input:
