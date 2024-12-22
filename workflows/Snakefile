@@ -93,14 +93,14 @@ rule coarsen:
     log:
         "logs/{graph}/reduction/coarsening/{miniature}.log"
     message:
-        "Coarsening graph '{wildcards.graph}' (wildcards.miniature)..."
+        "Coarsening graph '{wildcards.graph}' ({wildcards.miniature})..."
     params:
         alpha=lambda w:config['miniatures'][w.miniature]['alpha']
     resources:
         runtime=60,
         mem_mb=2000
     script:
-        "scripts/graph_reduce.py"
+        "scripts/reduction/coarsen.py"
 
 rule characterize:
     '''Characterizes a graph by calculating its relevant metrics
