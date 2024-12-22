@@ -5,9 +5,14 @@ import shutil
 
 configfile: "config/config.yaml"
 
+methods = ["miniaturization", "coarsening", "sparsification"]
+miniatures = list(config['miniatures'].keys())
+
 rule all:
     input:
-        expand("data/networks/hamsterster/giant/miniaturization/graph_{id}/graph_adjacency.npz",id=range(samples['miniaturization'].shape[0]))
+        expand("data/networks/hamsterster/giant/{method}/{miniature_id}/graph_adjacency.npz",
+            method=methods,
+            miniature_id=miniatures)
         
 rule miniaturization_params:
     '''Calculates the optimal miniaturization parameters of a graph
