@@ -6,7 +6,7 @@ import networkx as nx
 import sys
 import os
 import yaml
-from utils import StreamToLogger
+from scripts.utils.io import StreamToLogger
 import logging
 '''Calculates the parameters for the specified graph
 '''
@@ -56,7 +56,7 @@ def weights(metrics_file,
         print("Error: Invalid number of vertices in the miniature")
     
     print(f"Calculating parameters for graph at graph at {metrics_file}")
-    print(f"\t - Size: {n_vertices} nodes ({shrinkage:.02f}% miniaturization)")
+    print(f"\t - Size: {n_vertices} nodes ({shrinkage * 100:.02f}% miniaturization)")
     print(f"\t - Number iterations per sample: {n_iterations}")
     print(f"\t - Number of samples: {n_samples}\n")
 
@@ -117,8 +117,8 @@ def weights(metrics_file,
         
 weights(snakemake.input[0],
         snakemake.output[0],
-        0.9,
-        10,
-        30,
-        100)
+        snakemake.params[0]['alpha'],
+        snakemake.params[0]['n_changes'],
+        snakemake.params[0]['n_trials'],
+        snakemake.params[0]['n_steps'])
     

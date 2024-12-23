@@ -1,8 +1,12 @@
 #!/bin/bash
-#SBATCH --time=5:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mem=500M
 
-conda init
-conda activate minigraphs_env
+module purge
+module load Conda/3
 
-snakemake -s Snakefile_grt --executor slurm --workflow-profile slurm --rerun-incomplete
+conda activate minigraphs
+
+git checkout miniaturization
+
+snakemake --workflow-profile slurm --sdm conda --rerun-incomplete

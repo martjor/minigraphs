@@ -22,7 +22,7 @@ import os
 import sys
 import yaml
 import pandas as pd
-from utils import StreamToLogger
+from scripts.utils.io import StreamToLogger
 import logging
 
 @click.command()
