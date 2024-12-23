@@ -2,6 +2,8 @@ name: miniaturize
 channels:
   - conda-forge
 dependencies:
+  - python
+  - conda
   - pip
   - numpy 
   - scipy
@@ -10,7 +12,10 @@ dependencies:
   - click
   - pyarrow
   - mpi4py
+  - joblib
   - pyyaml
+  - threadpoolctl
+  - pyparsing
   - pip:
     - -e /mnt/home/martjor/repos/minigraphs/src
 
