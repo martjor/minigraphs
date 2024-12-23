@@ -132,7 +132,7 @@ rule sparsify:
         runtime=15,
         mem_mb=2000
     script:
-        "scripts/reduction/corasen.py"
+        "scripts/reduction/sparsify.py"
 
 rule metrics:
     '''Characterizes a graph by calculating its relevant metrics
