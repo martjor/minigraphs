@@ -5,10 +5,26 @@ import shutil
 
 configfile: "config/config.yaml"
 
+methods = ["sparsification"]
+miniatures = list(config['miniatures'].keys())
+
 rule all:
     input:
-        expand("data/networks/hamsterster/giant/miniaturization/graph_{id}/graph_adjacency.npz",id=range(samples['miniaturization'].shape[0]))
-        
+        expand("data/networks/hamsterster/giant/{method}/{miniature_id}/graph_adjacency.npz",
+            method=methods,
+            miniature_id=miniatures)
+
+def miniaturization_params_params(wildcards):
+    # Configuration for the current miniature
+    config_min = config['miniatures'][wildcards.miniature]
+    params = {'alpha': config_min['alpha'],
+              'n_changes': config_min['n_changes'],
+              'n_trials': config_min['params']['n_trials'],
+              'n_steps': config_min['params']['n_steps']
+    }
+
+    return params
+
 rule miniaturization_params:
     '''Calculates the optimal miniaturization parameters of a graph
     
@@ -22,18 +38,16 @@ rule miniaturization_params:
     input:
         "data/networks/{graph}/metrics.yaml"
     output:
-        "data/networks/{graph}/miniaturization/parameters_{id}.yaml"
+        "data/networks/{graph}/miniaturization/{miniature}/weights.yaml"
     resources:
         runtime=400,
         mem_mb=2000
     log:
-        "logs/{graph}/reduction/miniaturization/parameters_{id}/parameters.log"
+        "logs/{graph}/miniaturization/{miniature}/reduction_weights.log"
     params:
-        params=lambda w:samples['miniaturization'].loc[int(w.id)],
-        n_trials=30,
-        n_steps=100
+        miniaturization_params_params
     script:
-        "scripts/miniaturization_params.py"
+        "scripts/reduction/miniaturize_params.py"
 
 rule miniaturization:
     '''Miniaturizes a graph using the parallel tempering algorithm
@@ -49,59 +63,78 @@ rule miniaturization:
     '''
     input:
         "data/networks/{graph}/metrics.yaml",
-        lambda w: f"data/networks/{w.graph}/miniaturization/parameters_{int(w.idx) // config['methods']['miniaturization']['n_graphs']}.yaml"
+        "data/networks/{graph}/miniaturization/{miniature}/weights.yaml"
     output:
-        "data/networks/{graph}/miniaturization/graph_{idx}/graph_adjacency.npz",
-        directory("data/networks/{graph}/miniaturization/graph_{idx}/trajectories")
+        "data/networks/{graph}/miniaturization/{miniature}/graph_adjacency.npz",
+        directory("data/networks/{graph}/miniaturization/{miniature}/trajectories")
     params:
-        params=lambda w:samples['miniaturization'].loc[int(w.idx)]
+        lambda w: config['miniatures'][w.miniature]
     resources:
-        runtime=1440,
+        runtime=30,
         mem_mb=2000,
         tasks=6,
         mpi="mpiexec"
     conda:
         "envs/miniaturize.yaml"
     log:
-        "logs/{graph}/reduction/miniaturization/graph_{idx}.log"
+        "logs/{graph}/miniaturization/{miniature}/reduction.log"
     shell:
-        "{resources.mpi} -n {resources.tasks} scripts/miniaturize.py"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params.params['alpha']}"
-        " --n_changes {params.params['n_changes']}"
-        " --n_steps {params.params['n_steps']}"
-        " --n_substeps {params.params['n_sub_steps']}"
+        "{resources.mpi} -n {resources.tasks} python -m scripts.reduction.miniaturize"
+        " {input[0]} {input[1]} {output[0]} {output[1]} {params[0][alpha]}"
+        " --n_changes {params[0][n_changes]}"
+        " --n_steps {params[0][pt][n_steps]}"
+        " --n_substeps {params[0][pt][n_substeps]}"
         " --log-file {log[0]}"
-rule reduce:
-    '''Reduce a graph dataset.
 
-    This rule reduces the graph dataset using via sparsification or coarsening, 
-    depending on the wildcard specified. 
+rule coarsen:
+    '''Coarsens a graph dataset
 
     Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph to reduce
+        - Scipy Sparse Array containing the adjacency matrix of the graph to coarsen
     
     Output:
         - Scipy Sparse Array containing the adjacency matrix of the reduced graph
-        - YAML file containing the set of parameters used to reduce the graph
     '''
     input:
         "data/networks/{graph}/graph_adjacency.npz",
     output:
-        "data/networks/{graph}/{method}/{graph_idx}/graph_adjacency.npz",
-        "data/networks/{graph}/{method}/{graph_idx}/params_reduction.yaml"
+        "data/networks/{graph}/coarsening/{miniature}/graph_adjacency.npz",
     log:
-        "logs/reduction_{graph}/{method}/{graph_idx}.log"
+        "logs/{graph}/coarsening/{miniature}/reduction.log"
     message:
-        "Reducing {wildcards.graph} ({wildcards.graph_idx}) using {wildcards.method}..."
+        "Coarsening graph '{wildcards.graph}' ({wildcards.miniature})..."
     params:
-        method_parameters=lambda w: samples[w.method].loc[w.graph_idx].to_dict()
+        alpha=lambda w:config['miniatures'][w.miniature]['alpha']
     resources:
-        runtime=120,
-        mem_mb=1000
+        runtime=60,
+        mem_mb=2000
     script:
-        "scripts/graph_reduce.py"
+        "scripts/reduction/coarsen.py"
 
-rule characterize:
+rule sparsify:
+    '''Sparsifies a graph dataset
+
+    Input:
+        - Scipy Sparse Array with the adjacency matrix the graph to sparsify.
+    Output:
+        - Scipy Sparse Array with the adjacency matrix of the sparsified graph.
+    '''
+    input:
+        "data/networks/{graph}/graph_adjacency.npz",
+        "data/networks/{graph}/miniaturization/{miniature}/graph_metrics.yaml"
+    output:
+        "data/networks/{graph}/sparsification/{miniature}/graph_adjacency.npz"
+    log:
+        "logs/{graph}/sparsification/{miniature}/reduction.log"
+    message:
+        "Sparsifying graph '{wildcards.graph}' ({wildcards.miniature})..."
+    resources:
+        runtime=15,
+        mem_mb=2000
+    script:
+        "scripts/reduction/sparsify.py"
+
+rule metrics:
     '''Characterizes a graph by calculating its relevant metrics
 
     Input:

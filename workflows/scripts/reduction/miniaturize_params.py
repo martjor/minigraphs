@@ -6,7 +6,7 @@ import networkx as nx
 import sys
 import os
 import yaml
-from utils import StreamToLogger
+from scripts.utils.io import StreamToLogger
 import logging
 '''Calculates the parameters for the specified graph
 '''
@@ -115,11 +115,10 @@ def weights(metrics_file,
     with open(params_file,'w') as file:
         yaml.dump(params.to_dict(),file,default_flow_style=False)
         
-params = snakemake.params.params
 weights(snakemake.input[0],
         snakemake.output[0],
-        params['alpha'],
-        params['n_changes'],
-        snakemake.params.n_trials,
-        snakemake.params.n_steps)
+        snakemake.params[0]['alpha'],
+        snakemake.params[0]['n_changes'],
+        snakemake.params[0]['n_trials'],
+        snakemake.params[0]['n_steps'])
     
