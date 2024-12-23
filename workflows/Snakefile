@@ -287,6 +287,28 @@ rule gexf:
     script:
         "scripts/graph_gexf.py"
 
+rule draw_graph_layout:
+    '''Calculates the graph layout to enable visualization
+
+    Utilizes the ForceAtlas2 algorithm to calculate the layout of the graph dataset.
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph.
+
+    Output:
+        - Numpy array containing the positions specifying the graph layout
+    '''
+    input:
+        "data/networks/{graph}/graph_adjacency.npz"
+    output:
+        "data/networks/{graph}/graph_layout.npy"
+    message:
+        "Generating layout for graph {graph}..."
+    params:
+        max_iter=1000
+    script:
+        "scripts/draw/graph_layout.py"
+
 rule plot_graph:
     '''Creates a visualization of the graph dataset.
 
