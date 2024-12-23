@@ -299,37 +299,33 @@ rule draw_graph_layout:
         - Numpy array containing the positions specifying the graph layout
     '''
     input:
-        "data/networks/{graph}/graph_adjacency.npz"
+        "data/networks/{graph}/giant/graph_adjacency.npz"
     output:
-        "data/networks/{graph}/graph_layout.npy"
+        "data/networks/{graph}/giant/graph_layout.npy"
     message:
-        "Generating layout for graph {graph}..."
+        "Generating layout for graph {wildcards.graph}..."
     params:
-        max_iter=1000
+        max_iter=config['viz']['max_iter']
     script:
         "scripts/draw/graph_layout.py"
 
-rule plot_graph:
+rule draw_graph_miniature:
     '''Creates a visualization of the graph dataset.
 
-    Utilizes the ForceAtlas2 algorithm to generate the layout on the graph
-    and draw it on a plane.
+    Takes a previously generated graph layout and draws a graph on top of it.
 
     Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph.
+        - Numpy Array containing the graph layout
 
     Output:
         - PNG file with a visualization of the graph dataset
     '''
     input:
-        "{path}/graph_adjacency.npz"
+        "data/networks/{graph}/giant/{sub_graph}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/graph_layout.npy"
     output:
-        "{path}/drawing.png"
-    log:
-        "{path}/drawing.log"
-    conda:
-        "envs/viz.yaml"
-    shell:
-        """
-        python -u scripts/graph_draw.py {input[0]} {output[0]} &> {log}
-        """
+        "data/networks/{graph}/giant/{sub_graph}/drawing.png"
+    message:
+        "Drawing graph {wildcards.graph}/{wildcards.sub_graph}..."
+    script:
+        "scripts/draw/graph.py"
