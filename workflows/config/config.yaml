@@ -1,33 +1,33 @@
 graph: "hamsterster"
 miniatures:
   min_1:
-    alpha: 0.25
-    n_changes: 10
+    alpha: 0.85
+    n_changes: 1
     params:
       n_trials: 10
       n_steps: 100
     pt:
-      n_steps: 20000
+      n_steps: 1000
       n_substeps: 100
 
   min_2:
-    alpha: 0.50
-    n_changes: 10
+    alpha: 0.90
+    n_changes: 1
     params:
       n_trials: 10
       n_steps: 100
     pt:
-      n_steps: 20000
+      n_steps: 1000
       n_substeps: 100
 
   min_3:
-    alpha: 0.75
-    n_changes: 10
+    alpha: 0.95
+    n_changes: 1
     params:
       n_trials: 10
       n_steps: 100
     pt:
-      n_steps: 20000
+      n_steps: 1000
       n_substeps: 100
 
 viz:
