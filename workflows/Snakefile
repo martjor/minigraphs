@@ -39,9 +39,9 @@ rule miniaturization_params:
           the graph to the specified size
     '''
     input:
-        "data/networks/{graph}/metrics.yaml"
+        "data/networks/{graph}/giant/metrics.yaml"
     output:
-        "data/networks/{graph}/miniaturization/{miniature}/weights.yaml"
+        "data/networks/{graph}/giant/miniaturization/{miniature}/weights.yaml"
     resources:
         runtime=400,
         mem_mb=2000
@@ -65,16 +65,16 @@ rule miniaturization:
           replica of the parallel tempering algorithm
     '''
     input:
-        "data/networks/{graph}/metrics.yaml",
-        "data/networks/{graph}/miniaturization/{miniature}/weights.yaml"
+        "data/networks/{graph}/giant/metrics.yaml",
+        "data/networks/{graph}/giant/miniaturization/{miniature}/weights.yaml"
     output:
-        "data/networks/{graph}/miniaturization/{miniature}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/miniaturization/{miniature}/graph_adjacency.npz",
         directory("data/networks/{graph}/miniaturization/{miniature}/trajectories")
     params:
         lambda w: config['miniatures'][w.miniature]
     resources:
         runtime=1440,
-        mem_mb=2000,
+        mem_mb=6000,
         tasks=6,
         mpi="mpiexec"
     conda:
@@ -218,7 +218,7 @@ rule sir:
     script:
         "scripts/sir/simulate.py"
 
-rule plot_sir:
+rule draw_sir:
     '''Plots the trajectories of the SIR model.
 
     Input:
@@ -228,9 +228,10 @@ rule plot_sir:
         - PNG file with an SIR plot.
     '''
     input:
-        "{path}/trajectories_sir.npy"
+        "data/networks/{graph}/giant/sir_trajectories.npy",
+        expand("data/networks/{{graph}}/giant/{{method}}/{miniature}/sir_trajectories.npy",miniature=miniatures)
     output:
-        "{path}/trajectories_sir.png"
+        "results/{graph}/sir/trajectories_{method}.png"
     script:
         "scripts/sir_plot.py"
 
