@@ -5,14 +5,17 @@ import shutil
 
 configfile: "config/config.yaml"
 
+graph = config['graph']
 methods = ["miniaturization","coarsening","sparsification"]
 miniatures = list(config['miniatures'].keys())
 
 rule all:
     input:
-        expand("data/networks/hamsterster/giant/{method}/{miniature_id}/graph_adjacency.npz",
+        f"results/{graph}/drawings/giant.png",
+        expand("results/{graph}/drawings/{method}/{miniature}.png",
+            graph=graph,
             method=methods,
-            miniature_id=miniatures)
+            miniature=miniatures)
 
 def miniaturization_params_params(wildcards):
     # Configuration for the current miniature
@@ -287,7 +290,7 @@ rule draw_graph_miniature:
         "data/networks/{graph}/giant/{sub_graph}/graph_adjacency.npz",
         "data/networks/{graph}/giant/graph_layout.npy"
     output:
-        "data/networks/{graph}/giant/{sub_graph}/drawing.png"
+        "results/{graph}/drawings/{sub_graph}.png"
     message:
         "Drawing graph {wildcards.graph}/{wildcards.sub_graph}..."
     script:
@@ -298,7 +301,7 @@ rule draw_graph_original:
         "data/networks/{graph}/giant/graph_adjacency.npz",
         "data/networks/{graph}/giant/graph_layout.npy"
     output:
-        "data/networks/{graph}/giant/drawing.png"
+        "results/{graph}/drawings/giant.png"
     message:
         "Drawing graph {wildcards.graph}..."
     script:
