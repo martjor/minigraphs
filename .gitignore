@@ -20,5 +20,3 @@ workflows/**/logs/
 workflows/**/.snakemake/
 workflows/**/results/
 
-workflows/config/
-!workflows/config/template_*
