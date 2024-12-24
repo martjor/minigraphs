@@ -5,12 +5,7 @@ import shutil
 
 configfile: "config/config.yaml"
 
-<<<<<<< HEAD
-
-methods = ["sparsification"]
-=======
 methods = ["miniaturization","coarsening","sparsification"]
->>>>>>> fa76b45 (RM: getxf rule)
 miniatures = list(config['miniatures'].keys())
 
 rule all:
@@ -297,3 +292,15 @@ rule draw_graph_miniature:
         "Drawing graph {wildcards.graph}/{wildcards.sub_graph}..."
     script:
         "scripts/draw/graph.py"
+
+rule draw_graph_original:
+    input:
+        "data/networks/{graph}/giant/graph_adjacency.npz",
+        "data/networks/{graph}/giant/graph_layout.npy"
+    output:
+        "data/networks/{graph}/giant/drawing.png"
+    message:
+        "Drawing graph {wildcards.graph}..."
+    script:
+        "scripts/draw/graph.py"
+
