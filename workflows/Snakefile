@@ -190,7 +190,7 @@ rule distribution_metrics:
     script:
         "scripts/graph_distribution_metrics.py"
 
-rule simulate:
+rule sir:
     '''Simulates the diffusion model on the graph.
 
     For the SIR model, the trajectories returned by the rule are the 
@@ -205,7 +205,7 @@ rule simulate:
     input:
         "{path}/graph_adjacency.npz",
     output:
-        "{path}/trajectories_{model}.npy"
+        "{path}/sir_trajectories.npy"
     params:
         config=lambda w:config['sir']
     resources:
@@ -213,7 +213,7 @@ rule simulate:
         mem_mb=1000,
         cpus_per_task=1,
     script:
-        "scripts/simulation_{wildcards.model}_run.py"
+        "scripts/sir/simulate.py"
 
 rule plot_sir:
     '''Plots the trajectories of the SIR model.
