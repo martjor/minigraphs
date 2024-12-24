@@ -5,8 +5,12 @@ import shutil
 
 configfile: "config/config.yaml"
 
+<<<<<<< HEAD
 
 methods = ["sparsification"]
+=======
+methods = ["miniaturization","coarsening","sparsification"]
+>>>>>>> fa76b45 (RM: getxf rule)
 miniatures = list(config['miniatures'].keys())
 
 rule all:
@@ -71,7 +75,7 @@ rule miniaturization:
     params:
         lambda w: config['miniatures'][w.miniature]
     resources:
-        runtime=30,
+        runtime=1440,
         mem_mb=2000,
         tasks=6,
         mpi="mpiexec"
@@ -131,7 +135,7 @@ rule sparsify:
         "Sparsifying graph '{wildcards.graph}' ({wildcards.miniature})..."
     resources:
         runtime=15,
-        mem_mb=2000
+        mem_mb=6000
     script:
         "scripts/reduction/sparsify.py"
 
@@ -250,42 +254,6 @@ rule qois_sir:
         "{path}/qois_sir.yaml"
     script:
         "scripts/model_qois_sir.py"
-
-rule draw_layout:
-    input:
-        "data/networks/{graph}/graph_adjacency.npz"
-    output:
-        "data/networks/{graph}/layout.npy"
-    script:
-        "scripts/draw_layout.py"
-
-rule draw_original:
-    input:
-        "data/networks/{graph}/drawing.png"
-    output:
-        "results/{graph}/drawing.png"
-    shell:
-        """
-        mv {input[0]} {output[0]}
-        """
-
-rule gexf:
-    '''Generates a gexf file of a graph.
-
-    Stores the graph in the .gexf format compatible with gephi.
-
-    Input:
-        - Scipy Sparse Array containing the adjacency matrix of a grpah.
-
-    Output:
-        - .gexf file of the graph.
-    '''
-    input:
-        "{path}/graph_adjacency.npz"
-    output:
-        "{path}/graph.gexf"
-    script:
-        "scripts/graph_gexf.py"
 
 rule draw_graph_layout:
     '''Calculates the graph layout to enable visualization
