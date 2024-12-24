@@ -207,7 +207,7 @@ rule simulate:
     output:
         "{path}/trajectories_{model}.npy"
     params:
-        config=lambda w:config['models'][w.model]
+        config=lambda w:config['sir']
     resources:
         runtime=60,
         mem_mb=1000,
