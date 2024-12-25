@@ -149,8 +149,8 @@ class Sir:
         '''Updates the states of the agents
         '''
         n_agents = A.shape[0]
-        if self.beta > 1.0:
-            raise ValueError("Beta must be smaller or equal than 1.0")
+        if self.tau > 1.0:
+            raise ValueError("Tau must be smaller or equal than 1.0")
         
         for i in range(n_agents):
             # Check current agent's state
