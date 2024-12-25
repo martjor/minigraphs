@@ -232,8 +232,8 @@ rule draw_sir:
         expand("data/networks/{{graph}}/giant/{{method}}/{miniature}/sir_trajectories.npy",miniature=miniatures)
     output:
         "results/{graph}/sir/trajectories_{method}.png"
-    script:
-        "scripts/sir_plot.py"
+    notebook:
+        "scripts/sir_plot.py.ipynb"
 
 rule qois_sir:
     '''Calculates the Quantities of Interest of the SIR model.
