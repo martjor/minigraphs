@@ -233,7 +233,7 @@ rule draw_sir:
     output:
         "results/{graph}/sir/trajectories_{method}.png"
     notebook:
-        "scripts/sir_plot.py.ipynb"
+        "scripts/draw/sir_curves.py.ipynb"
 
 rule qois_sir:
     '''Calculates the Quantities of Interest of the SIR model.
