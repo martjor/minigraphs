@@ -218,6 +218,21 @@ rule sir:
     script:
         "scripts/sir/simulate.py"
 
+def draw_sir_input(wildcards):
+    # Define extension
+    if wildcards.type == "trajectories":
+        extension = "npy"
+    else:
+        extension = "yaml"
+
+    # Construct list of input files
+    files = []
+    files.append(f"data/networks/{wildcards.graph}/giant/sir_{wildcards.type}.{extension}")
+    for miniature in miniatures:
+        files.append(f"data/networks/{wildcards.graph}/giant/{wildcards.method}/{miniature}/sir_{wildcards.type}.{extension}")
+
+    return files
+
 rule draw_sir:
     '''Plots the trajectories of the SIR model.
 
@@ -228,12 +243,11 @@ rule draw_sir:
         - PNG file with an SIR plot.
     '''
     input:
-        "data/networks/{graph}/giant/sir_trajectories.npy",
-        expand("data/networks/{{graph}}/giant/{{method}}/{miniature}/sir_trajectories.npy",miniature=miniatures)
+        draw_sir_input
     output:
-        "results/{graph}/sir/trajectories_{method}.png"
+        "results/{graph}/sir/{type}_{method}.png"
     notebook:
-        "scripts/draw/sir_curves.py.ipynb"
+        "scripts/draw/sir_{wildcards.type}.py.ipynb"
 
 rule qois_sir:
     '''Calculates the Quantities of Interest of the SIR model.
