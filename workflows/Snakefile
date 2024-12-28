@@ -106,9 +106,9 @@ rule coarsen:
         - Scipy Sparse Array containing the adjacency matrix of the reduced graph
     '''
     input:
-        "data/networks/{graph}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/graph_adjacency.npz",
     output:
-        "data/networks/{graph}/coarsening/{miniature}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/coarsening/{miniature}/graph_adjacency.npz",
     log:
         "logs/{graph}/coarsening/{miniature}/reduction.log"
     message:
@@ -130,10 +130,10 @@ rule sparsify:
         - Scipy Sparse Array with the adjacency matrix of the sparsified graph.
     '''
     input:
-        "data/networks/{graph}/graph_adjacency.npz",
-        "data/networks/{graph}/miniaturization/{miniature}/graph_metrics.yaml"
+        "data/networks/{graph}/giant/graph_adjacency.npz",
+        "data/networks/{graph}/giant/miniaturization/{miniature}/graph_metrics.yaml"
     output:
-        "data/networks/{graph}/sparsification/{miniature}/graph_adjacency.npz"
+        "data/networks/{graph}/giant/sparsification/{miniature}/graph_adjacency.npz"
     log:
         "logs/{graph}/sparsification/{miniature}/reduction.log"
     message:
