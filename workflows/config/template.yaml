@@ -7,7 +7,7 @@ miniatures:
       n_trials: 10
       n_steps: 100
     pt:
-      n_steps: 1000
+      n_steps: 100
       n_substeps: 100
 
   min_2:
