@@ -115,7 +115,7 @@ def miniaturize(metrics_file,
 
     # Initialize replica
     replica = MH(metrics_funcs,
-                 schedule=lambda beta:0,
+                 schedule=lambda beta: B0,
                  n_changes=n_changes,
                  weights=weights)
 
