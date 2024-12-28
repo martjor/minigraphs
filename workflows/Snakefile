@@ -15,7 +15,14 @@ rule all:
         expand("results/{graph}/drawings/{method}/{miniature}.png",
             graph=graph,
             method=methods,
-            miniature=miniatures)
+            miniature=miniatures),
+        expand("results/{graph}/sir/trajectories_{method}.png",
+            graph=graph,
+            method=methods),
+        expand("results/{graph}/metrics/{which}_{method}.png",
+            graph=graph,
+            which=["spectral","reduction","networks"],
+            method=methods)
 
 def miniaturization_params_params(wildcards):
     # Configuration for the current miniature
@@ -69,7 +76,7 @@ rule miniaturization:
         "data/networks/{graph}/giant/miniaturization/{miniature}/weights.yaml"
     output:
         "data/networks/{graph}/giant/miniaturization/{miniature}/graph_adjacency.npz",
-        directory("data/networks/{graph}/miniaturization/{miniature}/trajectories")
+        directory("data/networks/{graph}/giant/miniaturization/{miniature}/trajectories")
     params:
         lambda w: config['miniatures'][w.miniature]
     resources:

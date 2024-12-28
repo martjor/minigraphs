@@ -5,8 +5,7 @@
 module purge
 module load Conda/3
 
+conda init
 conda activate minigraphs
 
-git checkout miniaturization
-
-snakemake --workflow-profile slurm --sdm conda --rerun-incomplete
+snakemake --workflow-profile slurm --sdm conda --rerun-incomplete 
