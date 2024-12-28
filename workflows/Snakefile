@@ -218,6 +218,21 @@ rule sir:
     script:
         "scripts/sir/simulate.py"
 
+rule draw_metrics:
+    '''Plots the evolution of graph metrics.
+    '''
+    input:
+        "data/networks/{graph}/giant/graph_metrics.yaml",
+        expand("data/networks/{{graph}}/giant/{{method}}/{miniature}/graph_metrics.yaml",miniature=miniatures)
+    params:
+        alpha=lambda w: {miniature: config['miniatures'][miniature]['alpha'] for miniature in miniatures}
+    output:
+        "results/{graph}/metrics/reduction_{method}.png",
+        "results/{graph}/metrics/networks_{method}.png",
+        "results/{graph}/metrics/spectral_{method}.png"
+    notebook:
+        "scripts/draw/metrics.py.ipynb"
+
 def draw_sir_input(wildcards):
     # Define extension
     if wildcards.type == "trajectories":
