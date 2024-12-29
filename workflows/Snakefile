@@ -225,6 +225,19 @@ rule sir:
     script:
         "scripts/sir/simulate.py"
 
+rule draw_miniaturization:
+    '''Generates visualization for PT miniaturization.
+    '''
+    input:
+        "data/networks/{graph}/giant/graph_metrics.yaml",
+        "data/networks/{graph}/giant/miniaturization/{miniature}/graph_metrics.yaml",
+        "data/networks/{graph}/giant/miniaturization/{miniature}/trajectories"
+    output:
+        "results/{graph}/miniaturization/trajectories_plane_{miniature}.png",
+        "results/{graph}/miniaturization/trajectories_error_{miniature}.png"
+    notebook:
+        "scripts/draw/miniaturization_trajectories.py.ipynb"
+
 rule draw_metrics:
     '''Plots the evolution of graph metrics.
     '''
