@@ -16,8 +16,9 @@ rule all:
             graph=graph,
             method=methods,
             miniature=miniatures),
-        expand("results/{graph}/sir/trajectories_{method}.png",
+        expand("results/{graph}/sir/{which}_{method}.png",
             graph=graph,
+            which=["trajectories","qois"],
             method=methods),
         expand("results/{graph}/metrics/{which}_{method}.png",
             graph=graph,
@@ -261,7 +262,7 @@ def draw_sir_input(wildcards):
     # Define extension
     if wildcards.type == "trajectories":
         extension = "npy"
-    else:
+    elif wildcards.type == "qois":
         extension = "yaml"
 
     # Construct list of input files
@@ -283,6 +284,8 @@ rule draw_sir:
     '''
     input:
         draw_sir_input
+    params:
+        alpha=lambda w: {miniature: config['miniatures'][miniature]['alpha'] for miniature in miniatures}
     output:
         "results/{graph}/sir/{type}_{method}.png"
     notebook:
@@ -301,11 +304,11 @@ rule qois_sir:
         - YAML file with the QOIs of the SIR model.
     '''
     input:
-        "{path}/trajectories_sir.npy"
+        "{path}/sir_trajectories.npy"
     output:
-        "{path}/qois_sir.yaml"
+        "{path}/sir_qois.yaml"
     script:
-        "scripts/model_qois_sir.py"
+        "scripts/sir/qois.py"
 
 rule draw_graph_layout:
     '''Calculates the graph layout to enable visualization

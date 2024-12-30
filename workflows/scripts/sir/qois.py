@@ -1,5 +1,5 @@
 import numpy as np
-from utils import save_dict
+from scripts.utils.io import save_dict
 
 # Load simulation runs
 results = np.load(snakemake.input[0])
