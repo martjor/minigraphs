@@ -22,7 +22,11 @@ rule all:
         expand("results/{graph}/metrics/{which}_{method}.png",
             graph=graph,
             which=["spectral","reduction","networks"],
-            method=methods)
+            method=methods),
+        expand("results/{graph}/miniaturization/trajectories_{which}_{miniature}.png",
+            graph=graph,
+            which=["plane","error"],
+            miniature=miniatures)
 
 def miniaturization_params_params(wildcards):
     # Configuration for the current miniature
