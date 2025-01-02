@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from minigraphs.miniaturize import MH
-from numpy import log
+from numpy import log, inf, nan
 import pandas as pd 
 import networkx as nx
 import sys
@@ -107,6 +107,7 @@ def weights(metrics_file,
     print("Measeured parameters:")
     print(params,f"\n")
 
+    params.replace([inf, -inf], nan, inplace=True)
     params = params.mean()
     print("Final parameters:")
     print(params)
