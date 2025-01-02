@@ -310,7 +310,9 @@ rule qois_sir:
     script:
         "scripts/sir/qois.py"
 
-rule draw_graph_layout:
+
+
+rule layout:
     '''Calculates the graph layout to enable visualization
 
     Utilizes the ForceAtlas2 algorithm to calculate the layout of the graph dataset.
@@ -322,17 +324,26 @@ rule draw_graph_layout:
         - Numpy array containing the positions specifying the graph layout
     '''
     input:
-        "data/networks/{graph}/giant/graph_adjacency.npz"
+        "{path}/graph_adjacency.npz"
     output:
-        "data/networks/{graph}/giant/graph_layout.npy"
-    message:
-        "Generating layout for graph {wildcards.graph}..."
+        "{path}/graph_layout.npy"
     params:
         max_iter=config['viz']['max_iter']
     script:
         "scripts/draw/graph_layout.py"
 
-rule draw_graph_miniature:
+rule draw_miniature:
+    input:
+        "data/networks/{graph}/giant/miniaturization/{miniature}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/miniaturization/{miniature}/graph_layout.npy"
+    output:
+        "results/{graph}/drawings/miniaturization/{miniature}.png"
+    message:
+        "Drawing graph {wildcards.miniature} for miniaturization..."
+    script:
+        "scripts/draw/graph.py"
+
+rule draw_reduction:
     '''Creates a visualization of the graph dataset.
 
     Takes a previously generated graph layout and draws a graph on top of it.
@@ -344,12 +355,14 @@ rule draw_graph_miniature:
         - PNG file with a visualization of the graph dataset
     '''
     input:
-        "data/networks/{graph}/giant/{sub_graph}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/{method}/{miniature}/graph_adjacency.npz",
         "data/networks/{graph}/giant/graph_layout.npy"
     output:
-        "results/{graph}/drawings/{sub_graph}.png"
+        "results/{graph}/drawings/{method}/{miniature}.png"
+    wildcard_constraints:
+        method="!miniaturization"
     message:
-        "Drawing graph {wildcards.graph}/{wildcards.sub_graph}..."
+        "Drawing graph {wildcards.miniature} for {wildcards.method}..."
     script:
         "scripts/draw/graph.py"
 
