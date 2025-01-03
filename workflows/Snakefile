@@ -332,18 +332,20 @@ rule layout:
     script:
         "scripts/draw/graph_layout.py"
 
-rule draw_miniature:
+rule draw_reduction:
     input:
-        "data/networks/{graph}/giant/miniaturization/{miniature}/graph_adjacency.npz",
-        "data/networks/{graph}/giant/miniaturization/{miniature}/graph_layout.npy"
+        "data/networks/{graph}/giant/{method}/{miniature}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/{method}/{miniature}/graph_layout.npy"
     output:
-        "results/{graph}/drawings/miniaturization/{miniature}.png"
+        "results/{graph}/drawings/{method}/{miniature}.png"
+    wildcard_constraints:
+        method="coarsening|miniaturization"
     message:
-        "Drawing graph {wildcards.miniature} for miniaturization..."
+        "Drawing graph {wildcards.miniature} for {wildcards.method}..."
     script:
         "scripts/draw/graph.py"
 
-rule draw_reduction:
+rule draw_sparsification:
     '''Creates a visualization of the graph dataset.
 
     Takes a previously generated graph layout and draws a graph on top of it.
@@ -355,14 +357,12 @@ rule draw_reduction:
         - PNG file with a visualization of the graph dataset
     '''
     input:
-        "data/networks/{graph}/giant/{method}/{miniature}/graph_adjacency.npz",
+        "data/networks/{graph}/giant/sparsification/{miniature}/graph_adjacency.npz",
         "data/networks/{graph}/giant/graph_layout.npy"
     output:
-        "results/{graph}/drawings/{method}/{miniature}.png"
-    wildcard_constraints:
-        method="!miniaturization"
+        "results/{graph}/drawings/sparsification/{miniature}.png"
     message:
-        "Drawing graph {wildcards.miniature} for {wildcards.method}..."
+        "Drawing graph {wildcards.miniature} for sparsification..."
     script:
         "scripts/draw/graph.py"
 
