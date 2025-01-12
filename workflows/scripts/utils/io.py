@@ -20,8 +20,8 @@ def save_dict(file,dictionary):
 def load_dict(file):
     '''Loads a dictionary from a file
     '''
-    with open(file,'r') as file:
-        return safe_load(file)
+    with open(file,'r') as f:
+        return safe_load(f)
     
 # Redirect stdout and stderr to logging
 class StreamToLogger:
