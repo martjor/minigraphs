@@ -50,6 +50,7 @@ sequence = degree_sequence(graph)
 
 # Evaluate metrics
 metrics = {metric: func(graph) for metric, func in functions.items()}
+metrics['assortativity_norm'] = (metrics['assortativity'] + 1) / 2
 metrics['n_components'] = len(components)
 metrics['connectivity'] = components[0].number_of_nodes() / graph.number_of_nodes()
 metrics['eig_1'] = float(real(evals[0]))
