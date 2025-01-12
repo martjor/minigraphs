@@ -51,7 +51,7 @@ rule miniaturization_params:
           the graph to the specified size
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml"
+        "data/networks/{graph}/giant/graph_metrics.yaml"
     output:
         "data/networks/{graph}/giant/miniaturization/{miniature}/weights.yaml"
     resources:
