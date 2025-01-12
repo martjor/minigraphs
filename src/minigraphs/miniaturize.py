@@ -17,6 +17,7 @@ from typing import Callable
 import matplotlib.pyplot as plt
 from abc import ABC,abstractmethod
 from collections import deque
+from pydantic import BaseModel, validate_call
 
 NX_DENSITY = lambda G: nx.density(G)
 NX_CLUSTERING = lambda G: nx.average_clustering(G)
@@ -93,7 +94,7 @@ class MH:
     graph_ : networkx.Graph
         The generated graph miniature.
     """
-
+    @validate_call
     def __init__(self,
                  metrics: dict [str, Callable],
                  schedule: Callable | None = None, 
@@ -146,7 +147,7 @@ class MH:
             raise ValueError("Specified weights don't match corresponding metrics")
         
         # Store number of changes per step
-        self.n_changes = n_changes
+        self.n_changes = int(n_changes)
         self.__window_size = 10
         
         # Store loss function
@@ -282,7 +283,7 @@ class MH:
         '''
         return np.exp((E0-E1)*self.beta) >= np.random.uniform()
 
-            
+    @validate_call(config={'arbitrary_types_allowed':True})
     def transform(self, 
                   graph_seed: nx.Graph, 
                   targets: dict[str,float],

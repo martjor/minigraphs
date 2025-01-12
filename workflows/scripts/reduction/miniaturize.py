@@ -22,7 +22,7 @@ import os
 import sys
 import yaml
 import pandas as pd
-from utils import StreamToLogger
+from scripts.utils.io import StreamToLogger
 import logging
 
 @click.command()
@@ -115,7 +115,7 @@ def miniaturize(metrics_file,
 
     # Initialize replica
     replica = MH(metrics_funcs,
-                 schedule=lambda beta:0,
+                 schedule=lambda beta: B0,
                  n_changes=n_changes,
                  weights=weights)
 

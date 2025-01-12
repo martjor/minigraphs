@@ -11,6 +11,7 @@ setup(
         "matplotlib",
         "scikit-learn",
         "networkx",
-        "click"
+        "click",
+        "pydantic<=2.8.0"
     ],
 )
