@@ -78,7 +78,7 @@ rule miniaturization:
           replica of the parallel tempering algorithm
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml",
+        "data/networks/{graph}/giant/graph_metrics.yaml",
         "data/networks/{graph}/giant/miniaturization/{miniature}/weights.yaml"
     output:
         "data/networks/{graph}/giant/miniaturization/{miniature}/graph_adjacency.npz",
