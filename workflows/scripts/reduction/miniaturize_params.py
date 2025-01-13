@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from minigraphs.miniaturize import MH
+from minigraphs.graph import spectral_radius
+
 from numpy import log, inf, nan
 import pandas as pd 
 import networkx as nx
@@ -13,6 +15,9 @@ import logging
 
 # Get the log file from Snakemake
 log_file = snakemake.log[0]
+
+# Get metrics to match
+metrics_names = snakemake.params.metrics_names
 
 # Configure logging to write to the Snakemake log file
 logging.basicConfig(
@@ -36,18 +41,19 @@ def weights(metrics_file,
     # Retrieve Graph Metrics
     with open(metrics_file) as file:
         metrics = yaml.safe_load(file)
-        metrics_target = {key:metrics[key] for key in ['density','assortativity_norm','clustering']}
+        metrics_target = {key:metrics[key] for key in metrics_names}
 
     # Specify Metric funcions
     funcs_metrics = {
         'density': nx.density,
         'assortativity_norm': lambda G: (nx.degree_assortativity_coefficient(G)+1)/2,
-        'clustering': nx.average_clustering
+        'clustering': nx.average_clustering,
+        'eig_1': lambda graph: spectral_radius(graph)
     }
 
     # Calculate miniature size
     try:
-        n_vertices = int(metrics['n_vertices'] * (1-shrinkage))
+        n_vertices = int(metrics['n_nodes'] * (1-shrinkage))
         
         if (n_vertices < 1):
             raise ValueError

@@ -60,7 +60,8 @@ rule miniaturization_params:
     log:
         "logs/{graph}/miniaturization/{miniature}/reduction_weights.log"
     params:
-        miniaturization_params_params
+        miniaturization_params_params,
+        metrics_names=['density','clustering','assortativity_norm','eig_1']
     script:
         "scripts/reduction/miniaturize_params.py"
 

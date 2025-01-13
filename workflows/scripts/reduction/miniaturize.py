@@ -16,6 +16,7 @@ import click
 from mpi4py import MPI
 import numpy as np
 from minigraphs.miniaturize import MH
+from minigraphs.graph import spectral_radius
 import networkx as nx
 from scipy.sparse import save_npz
 import os
@@ -85,13 +86,14 @@ def miniaturize(metrics_file,
         cycles += [remainder]
 
     # Replica parameters
-    n_vertices = int((1-shrinkage) * metrics['n_vertices'])
+    n_vertices = int((1-shrinkage) * metrics['n_nodes'])
     beta_arr = np.array([1/8,1/4,1/2,1,2,4])
     B0 = beta_arr[rank] * params['beta']
     metrics_funcs = {
         'density': nx.density,
         'assortativity_norm': lambda G: (nx.degree_assortativity_coefficient(G)+1)/2,
-        'clustering': nx.average_clustering
+        'clustering': nx.average_clustering,
+        'eig_1': lambda graph: spectral_radius(graph)
     }
 
     metrics_target = {
