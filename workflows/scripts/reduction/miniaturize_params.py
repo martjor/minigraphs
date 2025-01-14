@@ -10,14 +10,12 @@ import os
 import yaml
 from scripts.utils.io import StreamToLogger
 import logging
+from scripts.reduction.pt_setup import DICT_METRICS_FUNCS
 '''Calculates the parameters for the specified graph
 '''
 
 # Get the log file from Snakemake
 log_file = snakemake.log[0]
-
-# Get metrics to match
-metrics_names = snakemake.params.metrics_names
 
 # Configure logging to write to the Snakemake log file
 logging.basicConfig(
@@ -31,29 +29,28 @@ logging.basicConfig(
 sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
 sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
 
-def weights(metrics_file,
-           params_file,
-           shrinkage,
-           n_changes,
-           n_samples,
-           n_iterations):
+def weights(targets,
+            metrics_file,
+            params_file,
+            shrinkage,
+            n_changes,
+            n_samples,
+            n_iterations):
     
     # Retrieve Graph Metrics
     with open(metrics_file) as file:
-        metrics = yaml.safe_load(file)
-        metrics_target = {key:metrics[key] for key in metrics_names}
-
-    # Specify Metric funcions
-    funcs_metrics = {
-        'density': nx.density,
-        'assortativity_norm': lambda G: (nx.degree_assortativity_coefficient(G)+1)/2,
-        'clustering': nx.average_clustering,
-        'eig_1': lambda graph: spectral_radius(graph)
-    }
+        graph_metrics = yaml.safe_load(file)
+        
+    # Construct miniaturization target metrics and functions
+    metrics={}
+    functions={}
+    for target in targets:
+        metrics[target] = graph_metrics[target]
+        functions[target] = DICT_METRICS_FUNCS[target]
 
     # Calculate miniature size
     try:
-        n_vertices = int(metrics['n_nodes'] * (1-shrinkage))
+        n_vertices = int(graph_metrics['n_nodes'] * (1-shrinkage))
         
         if (n_vertices < 1):
             raise ValueError
@@ -72,14 +69,14 @@ def weights(metrics_file,
         print(f"Sweep {i+1}/{n_samples}")
         
         # Construct replica
-        replica = MH(funcs_metrics,
+        replica = MH(functions,
                      schedule=lambda beta:0,
                      n_changes=n_changes)
         
         # Transform ER graph
-        G = nx.erdos_renyi_graph(n_vertices,metrics_target['density'])
+        G = nx.erdos_renyi_graph(n_vertices,graph_metrics['density'])
         replica.transform(G,
-                          metrics_target,
+                          metrics,
                           n_iterations=n_iterations)
 
         # Retrieve trajectories
@@ -90,15 +87,15 @@ def weights(metrics_file,
         print(weights)
 
         # Calculate optimal beta
-        replica = MH(funcs_metrics,
+        replica = MH(functions,
                      schedule=lambda beta:0,
                      n_changes=n_changes,
                      weights=weights)
         
         # Transform ER graph
-        G = nx.erdos_renyi_graph(n_vertices,metrics_target['density'])
+        G = nx.erdos_renyi_graph(n_vertices,graph_metrics['density'])
         replica.transform(G,
-                          metrics_target,
+                          metrics,
                           n_iterations=n_iterations)
 
         df = replica.trajectories_
@@ -119,10 +116,16 @@ def weights(metrics_file,
     print(params)
 
     # Save to yaml
+    params = params.to_dict()
+    params_dict = {'beta': params['beta']}
+    params.pop('beta')
+    params_dict['weights'] = params 
+    
     with open(params_file,'w') as file:
-        yaml.dump(params.to_dict(),file,default_flow_style=False)
+        yaml.dump(params_dict,file,default_flow_style=False)
         
-weights(snakemake.input[0],
+weights(snakemake.params.targets,
+        snakemake.input[0],
         snakemake.output[0],
         snakemake.params[0]['alpha'],
         snakemake.params[0]['n_changes'],

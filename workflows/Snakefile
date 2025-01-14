@@ -61,7 +61,7 @@ rule miniaturization_params:
         "logs/{graph}/miniaturization/{miniature}/reduction_weights.log"
     params:
         miniaturization_params_params,
-        metrics_names=['density','clustering','assortativity_norm','eig_1']
+        targets=config['metrics']
     script:
         "scripts/reduction/miniaturize_params.py"
 
@@ -84,7 +84,8 @@ rule miniaturization:
         "data/networks/{graph}/giant/miniaturization/{miniature}/graph_adjacency.npz",
         directory("data/networks/{graph}/giant/miniaturization/{miniature}/trajectories")
     params:
-        lambda w: config['miniatures'][w.miniature]
+        lambda w: config['miniatures'][w.miniature],
+        metrics=config['metrics']
     resources:
         runtime=1440,
         mem_mb=6000,
