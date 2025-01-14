@@ -27,6 +27,7 @@ from scripts.utils.io import StreamToLogger
 import logging
 
 @click.command()
+@click.argument('targets',nargs=-1)
 @click.argument('metrics-file',type=click.Path(exists=True))
 @click.argument('params-file',type=click.Path(exists=True))
 @click.argument('adjacency-file',type=click.Path())
@@ -36,7 +37,8 @@ import logging
 @click.option('--n_steps',default=20000,help='Number of miniaturization steps')
 @click.option('--n_substeps',default=200,help='Number of miniaturization substeps')
 @click.option('--log-file',default=None)
-def miniaturize(metrics_file,
+def miniaturize(targets,
+                metrics_file,
                 params_file,
                 adjacency_file,
                 trajectories_dir,
