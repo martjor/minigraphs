@@ -85,7 +85,7 @@ rule miniaturization:
         directory("data/networks/{graph}/giant/miniaturization/{miniature}/trajectories")
     params:
         lambda w: config['miniatures'][w.miniature],
-        metrics=config['metrics']
+        targets=config['metrics']
     resources:
         runtime=1440,
         mem_mb=6000,
@@ -97,7 +97,7 @@ rule miniaturization:
         "logs/{graph}/miniaturization/{miniature}/reduction.log"
     shell:
         "{resources.mpi} -n {resources.tasks} python -m scripts.reduction.miniaturize"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params[0][alpha]}"
+        " {input[0]} {input[1]} {output[0]} {output[1]} {params[0][alpha]} {params.targets}"
         " --n_changes {params[0][n_changes]}"
         " --n_steps {params[0][pt][n_steps]}"
         " --n_substeps {params[0][pt][n_substeps]}"
