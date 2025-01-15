@@ -70,7 +70,7 @@ def miniaturize(metrics_file,
     ##### READ INPUT FILES #####
     #==========================#
     if size % 2:
-        raise Exception('An even number of cores is required')
+        raise Exception(f"An even number of cores is required ({size} cores specified)")
 
     # Target metrics
     with open(metrics_file,'r') as file:
