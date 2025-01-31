@@ -1,4 +1,5 @@
 from minigraphs.miniaturize import NX_ASSORTATIVITY, NX_CLUSTERING, NX_DENSITY
+from minigraphs.graph import degree_distribution_moment
 import networkx as nx 
 from yaml import dump
 from scipy.sparse import load_npz
@@ -15,12 +16,6 @@ def graph_components(G):
     graphs = [G.subgraph(c).copy() for c in components]
 
     return graphs
-
-def degree_sequence(graph):
-    '''Computes the node degree sequence of a graph
-    '''
-    sequence = sorted((d for n, d in graph.degree()))
-    return sequence 
 
 # PREAMBLE 
 adjacency_file = snakemake.input[0]
@@ -45,9 +40,6 @@ components = graph_components(graph)
 # Calculate eigenvalues
 evals,_ = eigs(adjacency,2)
 
-# Calculate degree distribution
-sequence = degree_sequence(graph)
-
 # Evaluate metrics
 metrics = {metric: func(graph) for metric, func in functions.items()}
 metrics['assortativity_norm'] = (metrics['assortativity'] + 1) / 2
@@ -55,8 +47,9 @@ metrics['n_components'] = len(components)
 metrics['connectivity'] = components[0].number_of_nodes() / graph.number_of_nodes()
 metrics['eig_1'] = float(real(evals[0]))
 metrics['eig_2'] = float(real(evals[1]))
-metrics['dd_m1'] = float(moment(sequence,order=1,center=0.0))
-metrics['dd_m2'] = float(moment(sequence,order=2,center=0.0))
+metrics['dd_m1'] = degree_distribution_moment(graph)
+metrics['dd_m2'] = degree_distribution_moment(graph,2)
+metrics['dd_ratio'] = metrics['dd_m2'] / metrics['dd_m1']
 
 # WRITE METRICS
 with open(metrics_file,'w') as file:
