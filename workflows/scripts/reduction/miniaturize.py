@@ -16,6 +16,7 @@ import click
 from mpi4py import MPI
 import numpy as np
 from minigraphs.miniaturize import MH
+from minigraphs.graph import spectral_radius
 import networkx as nx
 from scipy.sparse import save_npz
 import os
@@ -23,6 +24,7 @@ import sys
 import yaml
 import pandas as pd
 from scripts.utils.io import StreamToLogger
+from scripts.reduction.pt_setup import DICT_METRICS_FUNCS
 import logging
 
 @click.command()
@@ -31,6 +33,7 @@ import logging
 @click.argument('adjacency-file',type=click.Path())
 @click.argument('trajectories-dir',type=click.Path())
 @click.argument('shrinkage',type=click.FLOAT)
+@click.argument('targets',nargs=-1)
 @click.option('--n_changes',default=10,help='Number of changes proposed at each iteration')
 @click.option('--n_steps',default=20000,help='Number of miniaturization steps')
 @click.option('--n_substeps',default=200,help='Number of miniaturization substeps')
@@ -40,6 +43,7 @@ def miniaturize(metrics_file,
                 adjacency_file,
                 trajectories_dir,
                 shrinkage,
+                targets,
                 n_changes,
                 n_steps,
                 n_substeps,
@@ -66,11 +70,11 @@ def miniaturize(metrics_file,
     ##### READ INPUT FILES #####
     #==========================#
     if size % 2:
-        raise Exception('An even number of cores is required')
+        raise Exception(f"An even number of cores is required ({size} cores specified)")
 
     # Target metrics
     with open(metrics_file,'r') as file:
-        metrics = yaml.safe_load(file)
+        graph_metrics = yaml.safe_load(file)
     
     # Miniaturization Parameters
     with open(params_file,'r') as file:
@@ -85,39 +89,33 @@ def miniaturize(metrics_file,
         cycles += [remainder]
 
     # Replica parameters
-    n_vertices = int((1-shrinkage) * metrics['n_vertices'])
+    n_vertices = int((1-shrinkage) * graph_metrics['n_nodes'])
     beta_arr = np.array([1/8,1/4,1/2,1,2,4])
     B0 = beta_arr[rank] * params['beta']
-    metrics_funcs = {
-        'density': nx.density,
-        'assortativity_norm': lambda G: (nx.degree_assortativity_coefficient(G)+1)/2,
-        'clustering': nx.average_clustering
-    }
 
-    metrics_target = {
-        key:metrics[key] for key in metrics_funcs.keys()
-    }
-
-    weights = {
-        key:params[key] for key in metrics_funcs.keys()
-    }
+    # Retrieve specified metrics, parameters and reduction functions
+    metrics={}
+    functions={}
+    for target in targets:
+        metrics[target] = graph_metrics[target]
+        functions[target] = DICT_METRICS_FUNCS[target]
         
     # Initialize seed graph
-    G = nx.erdos_renyi_graph(n_vertices,metrics_target['density'])
+    G = nx.erdos_renyi_graph(n_vertices,graph_metrics['density'])
 
     # Display Message
     if rank == 0:
         print(f"Miniaturizing graph to size {n_vertices} ({shrinkage * 100}% miniaturization)...")
         print(f"Beta opt: {params['beta']}\n")
-        print(f"\t - Target metrics: {metrics_target}")
-        print(f"\t - Weights: {weights}")
-        print(f"\t - Functions: {metrics_funcs}\n")
+        print(f"\t - Target metrics: {metrics}")
+        print(f"\t - Weights: {params['weights']}")
+        print(f"\t - Functions: {functions}\n")
 
     # Initialize replica
-    replica = MH(metrics_funcs,
+    replica = MH(functions,
                  schedule=lambda beta: B0,
                  n_changes=n_changes,
-                 weights=weights)
+                 weights=params['weights'])
 
     def exchange(E0: float,
                  B0: float) -> float:
@@ -181,7 +179,7 @@ def miniaturize(metrics_file,
             
         # Optimize graph
         replica.transform(G,
-                          metrics_target,
+                          metrics,
                           n_iterations=steps)
         
         # Swap temperatures

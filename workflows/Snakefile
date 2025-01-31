@@ -51,7 +51,7 @@ rule miniaturization_params:
           the graph to the specified size
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml"
+        "data/networks/{graph}/giant/graph_metrics.yaml"
     output:
         "data/networks/{graph}/giant/miniaturization/{miniature}/weights.yaml"
     resources:
@@ -60,7 +60,8 @@ rule miniaturization_params:
     log:
         "logs/{graph}/miniaturization/{miniature}/reduction_weights.log"
     params:
-        miniaturization_params_params
+        miniaturization_params_params,
+        targets=config['metrics']
     script:
         "scripts/reduction/miniaturize_params.py"
 
@@ -77,13 +78,14 @@ rule miniaturization:
           replica of the parallel tempering algorithm
     '''
     input:
-        "data/networks/{graph}/giant/metrics.yaml",
+        "data/networks/{graph}/giant/graph_metrics.yaml",
         "data/networks/{graph}/giant/miniaturization/{miniature}/weights.yaml"
     output:
         "data/networks/{graph}/giant/miniaturization/{miniature}/graph_adjacency.npz",
         directory("data/networks/{graph}/giant/miniaturization/{miniature}/trajectories")
     params:
-        lambda w: config['miniatures'][w.miniature]
+        lambda w: config['miniatures'][w.miniature],
+        targets=config['metrics']
     resources:
         runtime=1440,
         mem_mb=6000,
@@ -95,7 +97,7 @@ rule miniaturization:
         "logs/{graph}/miniaturization/{miniature}/reduction.log"
     shell:
         "{resources.mpi} -n {resources.tasks} python -m scripts.reduction.miniaturize"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params[0][alpha]}"
+        " {input[0]} {input[1]} {output[0]} {output[1]} {params[0][alpha]} {params.targets}"
         " --n_changes {params[0][n_changes]}"
         " --n_steps {params[0][pt][n_steps]}"
         " --n_substeps {params[0][pt][n_substeps]}"
