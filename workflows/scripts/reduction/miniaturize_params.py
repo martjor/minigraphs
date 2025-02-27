@@ -29,13 +29,14 @@ logging.basicConfig(
 sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
 sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
 
-def weights(targets,
-            metrics_file,
-            params_file,
-            shrinkage,
-            n_changes,
-            n_samples,
-            n_iterations):
+def weights(
+    metrics_file,
+    params_file,
+    n_vertices,
+    n_iterations,
+    n_trials,
+    targets
+    ):
     
     # Retrieve Graph Metrics
     with open(metrics_file) as file:
@@ -47,31 +48,21 @@ def weights(targets,
     for target in targets:
         metrics[target] = graph_metrics[target]
         functions[target] = DICT_METRICS_FUNCS[target]
-
-    # Calculate miniature size
-    try:
-        n_vertices = int(graph_metrics['n_nodes'] * (1-shrinkage))
-        
-        if (n_vertices < 1):
-            raise ValueError
-        
-    except ValueError:
-        print("Error: Invalid number of vertices in the miniature")
     
     print(f"Calculating parameters for graph at graph at {metrics_file}")
-    print(f"\t - Size: {n_vertices} nodes ({shrinkage * 100:.02f}% miniaturization)")
+    print(f"\t - Size: {n_vertices} nodes ({1 - n_vertices/graph_metrics["n_nodes"]:.02f}% miniaturization)")
     print(f"\t - Number iterations per sample: {n_iterations}")
-    print(f"\t - Number of samples: {n_samples}\n")
+    print(f"\t - Number of samples: {n_trials}\n")
 
     # Calculate weights
     params = []
-    for i in range(n_samples):
-        print(f"Sweep {i+1}/{n_samples}")
+    for i in range(n_trials):
+        print(f"Sweep {i+1}/{n_trials}")
         
         # Construct replica
         replica = MH(functions,
                      schedule=lambda beta:0,
-                     n_changes=n_changes)
+                     n_changes=1)
         
         # Transform ER graph
         G = nx.erdos_renyi_graph(n_vertices,graph_metrics['density'])
@@ -89,7 +80,6 @@ def weights(targets,
         # Calculate optimal beta
         replica = MH(functions,
                      schedule=lambda beta:0,
-                     n_changes=n_changes,
                      weights=weights)
         
         # Transform ER graph
@@ -124,11 +114,12 @@ def weights(targets,
     with open(params_file,'w') as file:
         yaml.dump(params_dict,file,default_flow_style=False)
         
-weights(snakemake.params.targets,
-        snakemake.input[0],
-        snakemake.output[0],
-        snakemake.params[0]['alpha'],
-        snakemake.params[0]['n_changes'],
-        snakemake.params[0]['n_trials'],
-        snakemake.params[0]['n_steps'])
+weights(
+    snakemake.input[0],
+    snakemake.output[0],
+    snakemake.params.n_nodes,
+    snakemake.params.n_steps, 
+    snakemake.params.n_trials,
+    snakemake.params.targets,
+)
     

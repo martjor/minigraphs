@@ -4,12 +4,10 @@ import numpy as np
 import yaml
  
 # Parameters
-parameters = snakemake.params.config
-
-tau = parameters['tau']
-gamma = parameters['gamma']
-n_steps = parameters['n_steps']
-n_trials = parameters['n_trials']
+tau = snakemake.params.tau
+gamma = snakemake.params.gamma
+n_steps = snakemake.params.n_steps
+n_trials = snakemake.params.n_trials
 
 sir = sim.Sir(tau, gamma)
 
