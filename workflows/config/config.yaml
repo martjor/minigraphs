@@ -4,23 +4,34 @@ miniaturization:
     warmup:
       n_steps: 100
       n_trials: 30
-    setup:
-      n_miniatures: 3
+    n_miniatures: 3
 
     hamsterster:
-      min_200:
-        n_exchanges: 50
+      targets:
+        - density
+        - clustering
+        - assortativity_norm 
+
+      min_600:
+        n_exchanges: 400
         n_steps: 50
-        targets:
-          - density
-          - clustering
-          - assortativity
+        
+      min_400:
+        n_exchanges: 400
+        n_steps: 50
+
+      min_200:
+        n_exchanges: 400
+        n_steps: 50
 
     sir:
       n_steps: 500
       n_trials: 10
-      tau: 0.1
+      tau: 0.2
       gamma: 0.1
+
+    layout:
+      max_iter: 500
 
 
 
