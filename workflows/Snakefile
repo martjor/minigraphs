@@ -102,6 +102,18 @@ rule reduction:
         " --n_substeps {params.n_substeps}"
         " --log-file {log[0]}"
 
+rule random_graphs:
+    '''Creates Random ER graphs with the same diffusion properties as the target graph
+    '''
+    input:
+        "data/networks/{network}/graph_metrics.yaml"
+    output:
+        "data/miniaturization/{network}/random_{n_nodes}_{idx}/graph_adjacency.npz"
+    params:
+        n_nodes=lambda w: int(w.n_nodes)
+    script:
+        "scripts/reduction/random_graphs.py"
+
 # rule coarsen:
 #     '''Coarsens a graph dataset
 
@@ -321,6 +333,11 @@ rule sir_curves:
         original="data/networks/{network}/sir_trajectories.npy",
         miniatures=lambda w:[
             f"data/miniaturization/{w.network}/{miniature}_[{','.join(config['miniaturization'][w.network]['targets'])}]_{idx}/sir_trajectories.npy" \
+            for idx in range(config['miniaturization']['n_miniatures']) \
+            for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
+        ],
+        ers=lambda w:[
+            f"data/miniaturization/{w.network}/random_{miniature.split('_')[1]}_{idx}/sir_trajectories.npy" \
             for idx in range(config['miniaturization']['n_miniatures']) \
             for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
         ]
