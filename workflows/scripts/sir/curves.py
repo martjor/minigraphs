@@ -34,7 +34,7 @@ ax.annotate(
 
 data = {}
 for file in snakemake.input.miniatures:
-    miniature = '_'.join(file.split('_')[:2])
+    miniature = '_'.join(file.split('/')[-2].split('_')[:-1])
     infected = np.load(file)[:,1,:]
     
     if data.get(miniature) is None:

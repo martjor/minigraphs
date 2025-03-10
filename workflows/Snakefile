@@ -7,6 +7,8 @@ import hashlib
 import matplotlib.pyplot as plt
 
 configfile: "config/config.yaml"
+settings=["warmup", "sir", "layout","n_miniatures"]
+networks=[network for network in config['miniaturization'].keys() if network not in settings]
 
 rule all:
     input:
@@ -27,6 +29,11 @@ rule all:
         #     graph=graph,
         #     which=["plane","error"],
         #     miniature=miniatures)
+        expand(
+            "results/miniaturization/{network}/{file}.png",
+            network=networks,
+            file=["networks","sir_curves"]
+        )
 
 rule min_params:
     '''Calculates the optimal miniaturization parameters of a graph

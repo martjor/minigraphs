@@ -24,6 +24,28 @@ miniaturization:
         n_exchanges: 400
         n_steps: 50
 
+    giant_soc-pages-tvshow:
+      targets:
+        - density
+        - clustering
+        - assortativity_norm
+      
+      min_1170:
+        n_exchanges: 600
+        n_steps: 50 
+
+      min_780:
+        n_exchanges: 600
+        n_steps: 50 
+
+      min_390:
+        n_exchanges: 600
+        n_steps: 50 
+
+      
+
+    
+
     sir:
       n_steps: 500
       n_trials: 10
