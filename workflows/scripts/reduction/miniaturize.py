@@ -32,22 +32,22 @@ import logging
 @click.argument('params-file',type=click.Path(exists=True))
 @click.argument('adjacency-file',type=click.Path())
 @click.argument('trajectories-dir',type=click.Path())
-@click.argument('shrinkage',type=click.FLOAT)
+@click.argument('n_vertices',type=click.INT)
 @click.argument('targets',nargs=-1)
-@click.option('--n_changes',default=10,help='Number of changes proposed at each iteration')
 @click.option('--n_steps',default=20000,help='Number of miniaturization steps')
 @click.option('--n_substeps',default=200,help='Number of miniaturization substeps')
 @click.option('--log-file',default=None)
-def miniaturize(metrics_file,
-                params_file,
-                adjacency_file,
-                trajectories_dir,
-                shrinkage,
-                targets,
-                n_changes,
-                n_steps,
-                n_substeps,
-                log_file):
+def miniaturize(
+    metrics_file,
+    params_file,
+    adjacency_file,
+    trajectories_dir,
+    n_vertices,
+    targets,
+    n_steps,
+    n_substeps,
+    log_file
+    ):
     
     # Configure logging to write to the Snakemake log file
     logging.basicConfig(
@@ -82,14 +82,8 @@ def miniaturize(metrics_file,
 
     ##### INITIALIZE PARALLEL TEMPERING REPLICAS #####
     #================================================#
-    # Iteration parameters
-    cycles = [n_substeps] * (n_steps // n_substeps)
-    remainder = n_steps % n_substeps
-    if remainder != 0:
-        cycles += [remainder]
-
+    
     # Replica parameters
-    n_vertices = int((1-shrinkage) * graph_metrics['n_nodes'])
     beta_arr = np.array([1/8,1/4,1/2,1,2,4])
     B0 = beta_arr[rank] * params['beta']
 
@@ -105,7 +99,7 @@ def miniaturize(metrics_file,
 
     # Display Message
     if rank == 0:
-        print(f"Miniaturizing graph to size {n_vertices} ({shrinkage * 100}% miniaturization)...")
+        print(f"Miniaturizing graph to size {n_vertices}...")
         print(f"Beta opt: {params['beta']}\n")
         print(f"\t - Target metrics: {metrics}")
         print(f"\t - Weights: {params['weights']}")
@@ -114,7 +108,6 @@ def miniaturize(metrics_file,
     # Initialize replica
     replica = MH(functions,
                  schedule=lambda beta: B0,
-                 n_changes=n_changes,
                  weights=params['weights'])
 
     def exchange(E0: float,
@@ -170,9 +163,9 @@ def miniaturize(metrics_file,
         return B0
 
     list_trajectories = []
-    for cycle, steps in enumerate(cycles):
+    for i in range(n_steps):
         if rank == 0:
-            print(f"\nCycle {cycle+1}/{len(cycles)} <<<\n")
+            print(f"\nCycle {i+1}/{n_steps} <<<\n")
             verbose = True 
         else:
             verbose = False
@@ -180,7 +173,7 @@ def miniaturize(metrics_file,
         # Optimize graph
         replica.transform(G,
                           metrics,
-                          n_iterations=steps)
+                          n_iterations=n_substeps)
         
         # Swap temperatures
         trajectories = replica.trajectories_.copy()
