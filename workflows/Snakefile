@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 configfile: "config/config.yaml"
 settings=["warmup", "sir", "layout","n_miniatures"]
 networks=[network for network in config['miniaturization'].keys() if network not in settings]
+synthetic_n_nodes = [256, 576, 2304]
 
 rule all:
     input:
@@ -33,6 +34,11 @@ rule all:
             "results/miniaturization/{network}/{file}.png",
             network=networks,
             file=["networks","sir_curves"]
+        ),
+        expand(
+            "data/networks/synthetic/{model}_{n_nodes}/graph_metrics.yaml",
+            model=['er','ws','ba'],
+            n_nodes=synthetic_n_nodes
         )
 
 rule min_params:
@@ -113,6 +119,14 @@ rule random_graphs:
         n_nodes=lambda w: int(w.n_nodes)
     script:
         "scripts/reduction/random_graphs.py"
+
+rule graphs_synthetic:
+    '''Creates synthetic graphs
+    '''
+    output:
+        expand("data/networks/synthetic/{model}_{n_nodes}/graph_adjacency.npz",model=['er','ws','ba'],n_nodes=synthetic_n_nodes)
+    script:
+        "scripts/synthetic/generate.py"
 
 # rule coarsen:
 #     '''Coarsens a graph dataset
