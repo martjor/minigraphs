@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 configfile: "config/config.yaml"
 settings=["warmup", "sir", "layout","n_miniatures"]
 networks=[network for network in config['miniaturization'].keys() if network not in settings]
-synthetic_n_nodes = [256, 576, 2304]
+synthetic_n_nodes = [10000, 4444, 2500]
 
 rule all:
     input:
@@ -35,11 +35,7 @@ rule all:
             network=networks,
             file=["networks","sir_curves"]
         ),
-        expand(
-            "data/networks/synthetic/{model}_{n_nodes}/graph_metrics.yaml",
-            model=['er','ws','ba'],
-            n_nodes=synthetic_n_nodes
-        )
+        "results/sir/synthetics_metrics.png"
 
 rule min_params:
     '''Calculates the optimal miniaturization parameters of a graph
@@ -124,9 +120,20 @@ rule graphs_synthetic:
     '''Creates synthetic graphs
     '''
     output:
-        expand("data/networks/synthetic/{model}_{n_nodes}/graph_adjacency.npz",model=['er','ws','ba'],n_nodes=synthetic_n_nodes)
+        "data/networks/synthetic/{model}_{n_nodes}/graph_adjacency.npz"
+    params:
+        sizes=synthetic_n_nodes
     script:
         "scripts/synthetic/generate.py"
+
+rule viz_synthetic:
+    input:
+        expand("data/networks/synthetic/{model}_{n_nodes}/graph_metrics.yaml",model=['er','ws','ba'],n_nodes=synthetic_n_nodes),
+    output:
+        "results/sir/synthetics_metrics.png"
+    script:
+        "scripts/synthetic/plot.py"
+
 
 # rule coarsen:
 #     '''Coarsens a graph dataset
