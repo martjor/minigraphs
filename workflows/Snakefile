@@ -35,7 +35,8 @@ rule all:
             network=networks,
             file=["networks","sir_curves"]
         ),
-        "results/sir/synthetics_metrics.png"
+        "results/sir/synthetics_metrics.png",
+        "results/sir/curves.png"
 
 rule min_params:
     '''Calculates the optimal miniaturization parameters of a graph
@@ -133,6 +134,14 @@ rule viz_synthetic:
         "results/sir/synthetics_metrics.png"
     script:
         "scripts/synthetic/plot.py"
+
+rule sir_synthetic:
+    input:
+        expand("data/networks/synthetic/{model}_{n_nodes}/sir_trajectories.npy",model=['er','ws','ba'],n_nodes=synthetic_n_nodes)
+    output:
+        "results/sir/curves.png"
+    script:
+        "scripts/synthetic/curves.py"
 
 
 # rule coarsen:
