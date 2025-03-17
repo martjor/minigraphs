@@ -144,30 +144,30 @@ rule sir_synthetic:
         "scripts/synthetic/curves.py"
 
 
-# rule coarsen:
-#     '''Coarsens a graph dataset
+rule coarsen:
+    '''Coarsens a graph dataset
 
-#     Input:
-#         - Scipy Sparse Array containing the adjacency matrix of the graph to coarsen
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph to coarsen
     
-#     Output:
-#         - Scipy Sparse Array containing the adjacency matrix of the reduced graph
-#     '''
-#     input:
-#         "data/networks/{graph}/giant/graph_adjacency.npz",
-#     output:
-#         "data/networks/{graph}/giant/coarsening/{miniature}/graph_adjacency.npz",
-#     log:
-#         "logs/{graph}/coarsening/{miniature}/reduction.log"
-#     message:
-#         "Coarsening graph '{wildcards.graph}' ({wildcards.miniature})..."
-#     params:
-#         alpha=lambda w:config['miniatures'][w.miniature]['alpha']
-#     resources:
-#         runtime=60,
-#         mem_mb=2000
-#     script:
-#         "scripts/reduction/coarsen.py"
+    Output:
+        - Scipy Sparse Array containing the adjacency matrix of the reduced graph
+    '''
+    input:
+        "data/networks/{network}/graph_adjacency.npz",
+    output:
+        "data/coarsening/{network}/min_{n_nodes}/graph_adjacency.npz"
+    log:
+        "logs/coarsening/{network}/min_{n_nodes}/reduction.log"
+    message:
+        "Coarsening graph '{wildcards.graph}' ({wildcards.miniature})..."
+    params:
+        n_nodes=lambda w: int(w.n_nodes)
+    resources:
+        runtime=60,
+        mem_mb=2000
+    script:
+        "scripts/reduction/coarsen.py"
 
 # rule sparsify:
 #     '''Sparsifies a graph dataset
