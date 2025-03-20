@@ -32,11 +32,11 @@ rule all:
         #     miniature=miniatures)
         expand(
             "results/miniaturization/{network}/{file}.png",
-            network=networks,
+            network=['hamsterster'],
             file=["networks","sir_curves"]
         ),
-        "results/sir/synthetics_metrics.png",
-        "results/sir/curves.png"
+        # "results/sir/synthetics_metrics.png",
+        # "results/sir/curves.png"
 
 rule min_params:
     '''Calculates the optimal miniaturization parameters of a graph
@@ -248,30 +248,52 @@ rule metrics:
 #     script:
 #         "scripts/graph_distribution_metrics.py"
 
-rule sir:
-    '''Simulates the diffusion model on the graph.
-
-    For the SIR model, the trajectories returned by the rule are the 
-    normalized populations for each compartment at every iteration.
-
-    Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph.
-
-    Output:
-        - Numpy Array containing the relevant trajectories of the model.
+rule sir_original:
+    '''Simulates the diffusion model on the original graph.
     '''
     input:
-        "{path}/graph_adjacency.npz",
+        "data/networks/{network}/graph_adjacency.npz",
     output:
-        "{path}/sir_trajectories.npy"
+        "data/networks/{network}/sir_trajectories.npy"
     params:
-        n_steps=config['miniaturization']['sir']['n_steps'],
-        n_trials=config['miniaturization']['sir']['n_trials'],
-        tau=config['miniaturization']['sir']['tau'],
-        gamma=config['miniaturization']['sir']['gamma']
+        sir_params=config['miniaturization']['sir']
     resources:
         runtime=60,
         mem_mb=1000,
+        cpus_per_task=1,
+    script:
+        "scripts/sir/simulate.py"
+
+def sir_miniature_params(wildcards, input):
+    # Retrieve simulation parameters
+    params = {key: value for key, value in config['miniaturization']['sir'].items()}
+
+    # Calculate ratio from change in spectral radius
+    ratio = load_dict(input[1])['eig_1'] / load_dict(input[2])['eig_1']
+
+    # Update recovery rate
+    params['gamma'] *= ratio 
+
+    return params
+
+rule sir_miniature:
+    '''Simulates sir on the miniatures of the original network. 
+
+    Performas a reescaling of the simulation parameters of the SIR model based on the
+    relative change in the spectral radius of the graph.
+    '''
+    input:
+        "data/miniaturization/{network}/{miniature}/graph_adjacency.npz",
+        "data/miniaturization/{network}/{miniature}/graph_metrics.yaml",
+        "data/networks/{network}/graph_metrics.yaml",
+
+    output:
+        "data/miniaturization/{network}/{miniature}/sir_trajectories.npy"
+    params:
+        sir_params=sir_miniature_params
+    resources:
+        runtime=20,
+        mem_mb=500,
         cpus_per_task=1,
     script:
         "scripts/sir/simulate.py"
@@ -366,11 +388,11 @@ rule sir_curves:
             for idx in range(config['miniaturization']['n_miniatures']) \
             for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
         ],
-        ers=lambda w:[
-            f"data/miniaturization/{w.network}/random_{miniature.split('_')[1]}_{idx}/sir_trajectories.npy" \
-            for idx in range(config['miniaturization']['n_miniatures']) \
-            for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
-        ]
+        # ers=lambda w:[
+        #     f"data/miniaturization/{w.network}/random_{miniature.split('_')[1]}_{idx}/sir_trajectories.npy" \
+        #     for idx in range(config['miniaturization']['n_miniatures']) \
+        #     for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
+        # ]
     output:
         "results/miniaturization/{network}/sir_curves.png"
     script:

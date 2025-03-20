@@ -47,19 +47,6 @@ sizes_list = sorted(sizes.values(), reverse=True)
 max_nodes = max(sizes.values())
 min_nodes = min(sizes.values())
 
-for file in sorted(snakemake.input.ers):
-    n_nodes = int(file.split('/')[-2].split('_')[1])
-    color = 0.2 + 0.6 * (n_nodes-min_nodes) / (max_nodes-min_nodes)
-    infected = np.load(file)[:,1,:].mean(0)
-    
-    x = np.arange(len(infected)) + 100 * (sizes_list.index(n_nodes) + 1)
-    ax.plot(
-        x,
-        infected,
-        linestyle='--',
-        color=cmap(color),
-        alpha=0.5
-    )
 
 for miniature, list in sorted(data.items(),reverse=True):
     color = 0.2 + 0.6 * (sizes[miniature]-min_nodes) / (max_nodes-min_nodes)
