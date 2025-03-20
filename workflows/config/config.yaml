@@ -1,5 +1,16 @@
 seed: 42
 
+drawings:
+  nodes:
+    node_size: 30
+    node_color: '#18453B'
+    alpha: 0.7
+
+  edges:
+    width: 0.5
+    edge_color: k
+    alpha: 0.2
+
 miniaturization:
     warmup:
       n_steps: 100
@@ -8,9 +19,12 @@ miniaturization:
 
     hamsterster:
       targets:
-        - density
+        - sparsity
         - clustering
-        - assortativity_norm 
+        - assortativity_norm
+
+      
+
 
       min_600:
         n_exchanges: 400
@@ -53,7 +67,7 @@ miniaturization:
       gamma: 0.1
 
     layout:
-      max_iter: 500
+      max_iter: 300
 
 
 

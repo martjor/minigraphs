@@ -8,16 +8,32 @@ import matplotlib.pyplot as plt
 
 configfile: "config/config.yaml"
 settings=["warmup", "sir", "layout","n_miniatures"]
-networks=[network for network in config['miniaturization'].keys() if network not in settings]
+
+networks=[key for key in config['miniaturization']['hamsterster'].keys() if (key != 'targets')]
+n_miniatures = config['miniaturization']['n_miniatures']
+
 synthetic_n_nodes = [10000, 4444, 2500]
+
+targets = config['miniaturization']['hamsterster']['targets']
 
 rule all:
     input:
         expand(
-            "results/miniaturization/{network}/{file}.png",
-            network=['hamsterster'],
-            file=["networks","sir_curves"]
-        ),
+            "results/miniaturization/{network}/networks/{miniature}_{index}.png",
+            network=["hamsterster"],
+            miniature=[f"{network}_[{','.join(targets)}]" for network in networks],
+            index=range(n_miniatures)
+        )
+        # Visualization of all networks
+        #f"results/miniaturization/{network}/networks.png",
+
+        # Visualization of varying SIR curves
+        #f"results/miniaturization/{network}/sir_curves.png",
+
+        # Visualization for each miniature
+        
+
+
         # "results/sir/synthetics_metrics.png",
         # "results/sir/curves.png"
 
@@ -257,33 +273,6 @@ rule sir_curves:
     script:
         "scripts/sir/curves.py"
 
-rule draw_miniaturization:
-    '''Draws the original graph as well as all its miniatures
-    '''
-    input:
-        original=expand("data/networks/{{network}}/{file}", file=["graph_adjacency.npz", "graph_metrics.yaml", "graph_layout.npy"]),
-        miniatures= lambda w: [
-            f"data/miniaturization/{w.network}/{miniature}_[{','.join(config['miniaturization'][w.network]['targets'])}]_{idx}/{file}"
-            for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
-            for idx in range(config['miniaturization']['n_miniatures']) 
-            for file in ["graph_adjacency.npz", "graph_metrics.yaml", "graph_layout.npy"] 
-        ]
-        # miniatures=lambda w:[
-        #     [
-
-        #     ]
-        #     f"data/miniaturization/{w.network}/{miniature}_[{','.join(config['miniaturization'][w.network]['targets'])}]_{idx}/graph_layout.npy" \
-        #     for idx in range(config['miniaturization']['n_miniatures']) \
-        #     for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
-        # ]
-    output:
-        "results/miniaturization/{network}/networks.png"
-    params:
-        n_graphs=config['miniaturization']['n_miniatures'],
-        targets=lambda w:config['miniaturization'][w.network]['targets']
-    script:
-        "scripts/draw/networks.py"
-
 
 rule layout:
     '''Calculates the graph layout to enable visualization
@@ -304,4 +293,17 @@ rule layout:
         max_iter=config['miniaturization']['layout']['max_iter']
     script:
         "scripts/draw/graph_layout.py"
+
+rule draw_miniature:
+    '''Draws the specified graph
+    '''
+    input:
+        "data/miniaturization/{network}/{miniature}/graph_adjacency.npz",
+        "data/miniaturization/{network}/{miniature}/graph_layout.npy"
+    output:
+        "results/miniaturization/{network}/networks/{miniature}.png"
+    params:
+        properties=config['drawings']
+    script:
+        "scripts/draw/graph.py"
 
