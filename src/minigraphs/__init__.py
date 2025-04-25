@@ -2,9 +2,13 @@
 Minigraphs
 ===========
 
-Python package to miniaturize large networks using the Metropolis-Hastings Algorithm
+Python package for experimentation with network models
 """
-from minigraphs.miniaturize import *
-import minigraphs.io 
-import minigraphs.visualization
+
+_submodules = [
+    "simulation",
+    "data",
+    "miniaturize"
+]
+
 
