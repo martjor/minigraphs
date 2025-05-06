@@ -1,2 +1,5 @@
-from .models import *
-from .analysis import *
+from .models.sir import SIRModel
+
+__all__ = [
+    SIRModel
+]

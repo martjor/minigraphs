@@ -9,6 +9,7 @@ _submodules = [
     "simulation",
     "data",
     "miniaturize"
+    "sampling"
 ]
 
 
