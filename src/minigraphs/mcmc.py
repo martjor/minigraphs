@@ -51,6 +51,20 @@ class Chain(ABC):
     def state(self, graph: nx.Graph):
         self.graph_current = graph
 
+class UniformChain(Chain):
+    def __init__(self, graph, n_nodes, seed=None):
+        super().__init__(graph, seed)
+        self.n_nodes = n_nodes
+
+        # Random subgraph
+        self.graph_current = nx.subgraph(graph, self.random.sample(list(graph.nodes), k=self.n_nodes))
+
+    def _propose(self):
+        """Proposes a uniform random subgraph
+        """
+        return nx.subgraph(self.graph, self.random.sample(list(self.graph.nodes), k=self.n_nodes))
+
+
 class SubGraphChain(Chain):
     def __init__(
             self, 
