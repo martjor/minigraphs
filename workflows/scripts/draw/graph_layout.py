@@ -9,7 +9,9 @@ graph = load_graph(snakemake.input[0])
 # Calculate Layout
 pos = nx.forceatlas2_layout(
     graph,
-    max_iter=snakemake.params.max_iter
+    max_iter=snakemake.params.max_iter,
+    dissuade_hubs=True,
+    scaling_ratio=1.0,
 )
 
 # Save layout

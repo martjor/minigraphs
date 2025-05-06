@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import yaml
 import shutil
-from scripts.utils.io import load_dict, save_dict
+from scripts.utils.io import load_dict, save_dict, save_graph
+from networkx import erdos_renyi_graph
 import hashlib
 import matplotlib.pyplot as plt
 
@@ -23,7 +24,9 @@ rule all:
             network=["hamsterster"],
             miniature=[f"{network}_[{','.join(targets)}]" for network in networks],
             index=range(n_miniatures)
-        )
+        ),
+        "results/miniaturization/hamsterster/networks/er_600.png",
+        "results/miniaturization/hamsterster/networks/original.png"
         # Visualization of all networks
         #f"results/miniaturization/{network}/networks.png",
 
@@ -294,6 +297,14 @@ rule layout:
     script:
         "scripts/draw/graph_layout.py"
 
+rule er:
+    '''Draw ER network
+    '''
+    output:
+        "data/miniaturization/{network}/er_{n_nodes}/graph_adjacency.npz"
+    run:
+        save_graph(output[0],erdos_renyi_graph(int(wildcards.n_nodes),0.007))
+
 rule draw_miniature:
     '''Draws the specified graph
     '''
@@ -306,4 +317,27 @@ rule draw_miniature:
         properties=config['drawings']
     script:
         "scripts/draw/graph.py"
+
+def draw_original_params(wildcards):
+    properties = config['drawings'].copy()
+    properties['nodes']['node_size'] *= 0.5
+    properties['edges']['alpha'] *= 0.5
+
+    return properties
+rule draw_original:
+    '''Draws the original graph
+    '''
+    input:
+        "data/networks/{network}/graph_adjacency.npz",
+        "data/networks/{network}/graph_layout.npy"
+    output:
+        "results/miniaturization/{network}/networks/original.png"
+    params:
+        properties=draw_original_params
+    script:
+        "scripts/draw/graph.py"
+
+# rule draw_miniaturization:
+#     '''Draws Miniaturization Paths for visualization
+#     '''
 

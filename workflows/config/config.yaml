@@ -2,14 +2,14 @@ seed: 42
 
 drawings:
   nodes:
-    node_size: 30
+    node_size: 50
     node_color: '#18453B'
     alpha: 0.7
+    cmap: autumn
 
   edges:
-    width: 0.5
     edge_color: k
-    alpha: 0.2
+    alpha: 0.5
 
 miniaturization:
     warmup:
