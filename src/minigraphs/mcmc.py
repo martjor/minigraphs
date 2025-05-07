@@ -14,23 +14,21 @@ class Chain(ABC):
     ----------
     graph : nx.Graph
         The reference graph from which subgraphs will be proposed.
-    current_graph : Optional[nx.Graph]
-        Initial state of the chain. If ``None``, use ``original_graph``.
-    rng : Optional[random.Random]
-        RNG instance so that experiments can be reproduced.
+    seed : int
+        Random state of the chain.
     """
 
     def __init__(
         self,
         graph: nx.Graph,
-        seed: Optional[int] = None,
+        seed: int=None,
     ) -> None:
         self.graph = graph
         self.random = random.Random(seed)
         
     @abstractmethod
     def _propose(self) -> nx.Graph:
-        """Proposes a new graph from the current state
+        """Proposes a new graph from the current state.
         """
     
     def __iter__(self):
@@ -51,7 +49,7 @@ class Chain(ABC):
     def state(self, graph: nx.Graph):
         self.graph_current = graph
 
-class UniformChain(Chain):
+class SubgraphUniform(Chain):
     def __init__(self, graph, n_nodes, seed=None):
         super().__init__(graph, seed)
         self.n_nodes = n_nodes
@@ -64,8 +62,7 @@ class UniformChain(Chain):
         """
         return nx.subgraph(self.graph, self.random.sample(list(self.graph.nodes), k=self.n_nodes))
 
-
-class SubGraphChain(Chain):
+class SubgraphBoundary(Chain):
     def __init__(
             self, 
             graph,
@@ -110,14 +107,10 @@ class SimulatedAnnealing:
     schedule : Union[float, Callable[[int], float]]
         Temperature schedule. A constant (float) means fixed temperature.
         Otherwise provide a function ``T(step)``.
-    burn_in : int, default 0
-        Number of initial iterations to discard.
-    thinning : int, default 1
-        Keep one sample every ``thinning`` accepted states.
     max_steps : int, default 10_000
         Total number of proposal steps.
-    rng : Optional[random.Random]
-        Random generator (for reproducibility).
+    seed : Optional[int]
+        Random state for the ennealer.
     """
 
     def __init__(

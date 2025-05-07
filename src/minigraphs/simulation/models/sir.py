@@ -1,5 +1,6 @@
 import mesa
 from mesa.space import NetworkGrid
+from networkx import Graph
 
 class IndividualAgent(mesa.Agent):
     def __init__(self, model, compartment, node):
@@ -51,7 +52,29 @@ class IndividualAgent(mesa.Agent):
 
 
 class SIRModel(mesa.Model):
-    def __init__(self, beta, gamma, network, n_infected=1, seed=None):
+    """Agent-based SIR model for the spread of disease.
+
+    Parameters
+    ----------
+    beta: float
+        Infection probability over a link.
+    gamma: float
+        Recovery rate of an infected individual.
+    network: nx.Graph
+        Underlying interaction network.
+    n_infected: int
+        Number of infected individuals at the beginning of the simulation.
+    seed: float
+        Random state of the model
+    """
+    def __init__(
+            self, 
+            beta: float, 
+            gamma: float, 
+            network: Graph, 
+            n_infected: int=1, 
+            seed: int=None
+        ):
         super().__init__(seed=seed)
 
         self.n_agents = network.number_of_nodes()
@@ -88,7 +111,7 @@ class SIRModel(mesa.Model):
         )
 
     def step(self):
-        """Advances the model one time step
+        """Advances the model one time step.
         """ 
         self.datacollector.collect(self)
         self.agents.do('compute_state') 

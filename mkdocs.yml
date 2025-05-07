@@ -16,6 +16,7 @@ plugins:
                     show_symbol_type_toc: True
                     show_category_heading: False
                     show_source: False
+                    show_inheritance_diagram: True
 
                     docstring_style: numpy
                     docstring_section_style: table
@@ -33,13 +34,11 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
 
-
-
 nav:
     - Home: index.md
     - Reference:
-        - Miniaturize: reference/miniaturize.md
         - Simulation:   reference/simulation.md
+        - MCMC: reference/mcmc.md
     # - Tutorial
     # - How-to
     # - Explanation
