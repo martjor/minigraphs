@@ -1,4 +1,4 @@
-from .models.sir import SIRModel
+from .sir import SIRModel
 
 __all__ = [
     "SIRModel"

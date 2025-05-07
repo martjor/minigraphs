@@ -3,7 +3,7 @@ import networkx as nx
 from typing import Dict, Callable
 from collections import deque
 from tqdm import tqdm 
-from .mcmc import Chain
+from .mcmc.chains import Chain
 
 def subgraph_metrics(
         chain: Chain,

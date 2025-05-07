@@ -7,18 +7,14 @@ class Chain(ABC):
 
     Parameters
     ----------
-    graph : nx.Graph
-        The reference graph from which subgraphs will be proposed.
     seed : int
         Random state of the chain.
     """
 
     def __init__(
         self,
-        graph: nx.Graph,
         seed: int=None,
     ) -> None:
-        self.graph = graph
         self.random = random.Random(seed)
         
     @abstractmethod
@@ -45,8 +41,11 @@ class Chain(ABC):
         self.graph_current = graph
 
 class SubgraphUniform(Chain):
+    """Subgraphs are proposed by sampling uniformly from the original pool of nodes.
+    """
     def __init__(self, graph, n_nodes, seed=None):
-        super().__init__(graph, seed)
+        super().__init__(seed)
+        self.graph = graph
         self.n_nodes = n_nodes
 
         # Random subgraph
@@ -58,6 +57,8 @@ class SubgraphUniform(Chain):
         return nx.subgraph(self.graph, self.random.sample(list(self.graph.nodes), k=self.n_nodes))
 
 class SubgraphBoundary(Chain):
+    """Proposes subgraphs by replacing `n_swaps` nodes for nodes on the boundary with the subgraph. 
+    """
     def __init__(
             self, 
             graph,
@@ -65,7 +66,8 @@ class SubgraphBoundary(Chain):
             n_swaps=1,
             seed = None
         ) -> None:
-        super().__init__(graph, seed)
+        super().__init__(seed)
+        self.graph = graph
         self.n_nodes = n_nodes
         self.n_swaps = n_swaps
 

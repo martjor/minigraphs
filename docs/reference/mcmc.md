@@ -1,12 +1,7 @@
-# MCMC Module
+::: minigraphs.mcmc.annealer.SimulatedAnnealing
+    options:
+        show_signatures: True 
+::: minigraphs.mcmc.parallel_tempering.ParallelTempering
+
 ## Chains
-### Main Chain Class
-The following class defines the primary object to interface with the different annealers. 
-
-:::minigraphs.mcmc.Chain
-### Courtesy Chains
-:::minigraphs.mcmc.SubgraphUniform
-:::minigraphs.mcmc.SubgraphBoundary
-
-## Annealers
-:::minigraphs.mcmc.SimulatedAnnealing
+::: minigraphs.mcmc.chains

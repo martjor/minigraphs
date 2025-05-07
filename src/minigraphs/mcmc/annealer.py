@@ -23,8 +23,14 @@ class SimulatedAnnealing:
         Total number of proposal steps.
     seed : Optional[int]
         Random state for the ennealer.
-    """
 
+    Attributes
+    ----------
+    energies_ : Deque[float]
+        History of energies at every time step.
+    best_graph_ : Tuple[Graph, float]
+        Graph with the lowest energy throghout the process, along with it's corresponding energy.
+    """
     def __init__(
         self,
         chain: Chain,
@@ -33,6 +39,7 @@ class SimulatedAnnealing:
         *,
         max_steps: int = 1_000,
         seed: Optional[int] = None,
+
     ) -> None:
         self.chain = chain
         self.energy_fn = energy
@@ -40,49 +47,35 @@ class SimulatedAnnealing:
         self.max_steps = max_steps
         self.random = random.Random(seed)
 
-        # Book‑keeping
-        self.samples: Deque[Graph] = deque()
-        self.energies: Deque[float] = deque()
-        self.acceptance_count = 0
-        self.total_proposals = 0
-
     def run(self) -> None:
         """Run the annealing / MCMC loop."""
-        graph_curr = self.chain.state
-        energy_curr = self.energy_fn(graph_curr)
+        # Book‑keeping
+        self.energies_: Deque[float] = deque()
+        self.acceptance_count_ = 0
+        self.total_proposals_ = 0
+        self.current_graph_ = self.chain.state
+        self.current_energy_ = self.energy_fn(self.current_graph_)
+
+        # Initialize best graph along with it's energy
+        self.best_graph_ = (self.current_graph_, self.current_energy_)
 
         for step in tqdm(range(self.max_steps)):
             beta = self.schedule(step)
-            graph_new = self.chain._propose()
-            energy_new = self.energy_fn(graph_new)
+            new_graph = self.chain._propose()
+            new_energy = self.energy_fn(new_graph)
 
             # Metropolis acceptance probability
-            dE = energy_new - energy_curr
+            dE = new_energy - self.current_energy_
             accept = dE < 0 or self.random.random() < exp(-beta * dE)
 
-            self.total_proposals += 1
+            self.total_proposals_ += 1
             if accept:
-                self.acceptance_count += 1
-                graph_curr, energy_curr = graph_new, energy_new
-                self.chain.state = graph_curr
+                self.acceptance_count_ += 1
+                self.current_graph_, self.current_energy_ = new_graph, new_energy
+                self.chain.state = self.current_graph_
 
-            self.samples.append(graph_curr)
-            self.energies.append(energy_curr)
+                # Update best graph if new energy minimum is achieved
+                if self.best_graph_[1] > self.current_energy_:
+                    self.best_graph_ = (self.current_graph_, self.current_energy_)
 
-    # ------------------------------------------------------------------
-    # Diagnostics
-    # ------------------------------------------------------------------
-    @property
-    def acceptance_rate(self) -> float:
-        return self.acceptance_count / max(1, self.total_proposals)
-
-    def summary(self) -> str:
-        return (
-            f"SimulatedAnnealing: {len(self.samples)} samples | "
-            f"acc_rate={self.acceptance_rate:.3f} | "
-            f"energy_mean={np.mean(self.energies) if self.energies else float('nan'):.3f}"
-        )
-
-    # Convenience iterator
-    def __iter__(self) -> Iterable[Graph]:
-        return iter(self.samples)
+            self.energies_.append(self.current_energy_)
