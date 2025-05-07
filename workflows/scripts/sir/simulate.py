@@ -4,23 +4,20 @@ import numpy as np
 import yaml
  
 # Parameters
-tau = snakemake.params.tau
-gamma = snakemake.params.gamma
-n_steps = snakemake.params.n_steps
-n_trials = snakemake.params.n_trials
+params = snakemake.params.sir_params
 
-sir = sim.Sir(tau, gamma)
+sir = sim.Sir(params['tau'], params['gamma'])
 
 # Instantiate simulation object
 simulation = sim.Simulation(load_npz(snakemake.input[0]))
 
 # Allocate memory
-shape = (n_trials, 3, n_steps)
+shape = (params['n_trials'], 3, params['n_steps'])
 results = np.zeros(shape)
 
 # Simulate epidemic
-for i in range(n_trials):
-    simulation.run(sir, n_steps)
+for i in range(params['n_trials']):
+    simulation.run(sir, params['n_steps'])
     
     results[i,:,:] = simulation.trajectories_.T
     

@@ -2,38 +2,43 @@ import numpy as np
 import pandas as pd
 import yaml
 import shutil
-from scripts.utils.io import load_dict, save_dict
+from scripts.utils.io import load_dict, save_dict, save_graph
+from networkx import erdos_renyi_graph
 import hashlib
 import matplotlib.pyplot as plt
 
 configfile: "config/config.yaml"
 settings=["warmup", "sir", "layout","n_miniatures"]
-networks=[network for network in config['miniaturization'].keys() if network not in settings]
+
+networks=[key for key in config['miniaturization']['hamsterster'].keys() if (key != 'targets')]
+n_miniatures = config['miniaturization']['n_miniatures']
+
+synthetic_n_nodes = [10000, 4444, 2500]
+
+targets = config['miniaturization']['hamsterster']['targets']
 
 rule all:
     input:
-        # f"results/{graph}/drawings/giant.png",
-        # expand("results/{graph}/drawings/{method}/{miniature}.png",
-        #     graph=graph,
-        #     method=methods,
-        #     miniature=miniatures),
-        # expand("results/{graph}/sir/{which}_{method}.png",
-        #     graph=graph,
-        #     which=["trajectories","qois"],
-        #     method=methods),
-        # expand("results/{graph}/metrics/{which}_{method}.png",
-        #     graph=graph,
-        #     which=["spectral","reduction","networks"],
-        #     method=methods),
-        # expand("results/{graph}/miniaturization/trajectories_{which}_{miniature}.png",
-        #     graph=graph,
-        #     which=["plane","error"],
-        #     miniature=miniatures)
         expand(
-            "results/miniaturization/{network}/{file}.png",
-            network=networks,
-            file=["networks","sir_curves"]
-        )
+            "results/miniaturization/{network}/networks/{miniature}_{index}.png",
+            network=["hamsterster"],
+            miniature=[f"{network}_[{','.join(targets)}]" for network in networks],
+            index=range(n_miniatures)
+        ),
+        "results/miniaturization/hamsterster/networks/er_600.png",
+        "results/miniaturization/hamsterster/networks/original.png"
+        # Visualization of all networks
+        #f"results/miniaturization/{network}/networks.png",
+
+        # Visualization of varying SIR curves
+        #f"results/miniaturization/{network}/sir_curves.png",
+
+        # Visualization for each miniature
+        
+
+
+        # "results/sir/synthetics_metrics.png",
+        # "results/sir/curves.png"
 
 rule min_params:
     '''Calculates the optimal miniaturization parameters of a graph
@@ -102,53 +107,69 @@ rule reduction:
         " --n_substeps {params.n_substeps}"
         " --log-file {log[0]}"
 
-# rule coarsen:
-#     '''Coarsens a graph dataset
+rule random_graphs:
+    '''Creates Random ER graphs with the same diffusion properties as the target graph
+    '''
+    input:
+        "data/networks/{network}/graph_metrics.yaml"
+    output:
+        "data/miniaturization/{network}/random_{n_nodes}_{idx}/graph_adjacency.npz"
+    params:
+        n_nodes=lambda w: int(w.n_nodes)
+    script:
+        "scripts/reduction/random_graphs.py"
 
-#     Input:
-#         - Scipy Sparse Array containing the adjacency matrix of the graph to coarsen
+rule graphs_synthetic:
+    '''Creates synthetic graphs
+    '''
+    output:
+        "data/networks/synthetic/{model}_{n_nodes}/graph_adjacency.npz"
+    params:
+        sizes=synthetic_n_nodes
+    script:
+        "scripts/synthetic/generate.py"
+
+rule viz_synthetic:
+    input:
+        expand("data/networks/synthetic/{model}_{n_nodes}/graph_metrics.yaml",model=['er','ws','ba'],n_nodes=synthetic_n_nodes),
+    output:
+        "results/sir/synthetics_metrics.png"
+    script:
+        "scripts/synthetic/plot.py"
+
+rule sir_synthetic:
+    input:
+        expand("data/networks/synthetic/{model}_{n_nodes}/sir_trajectories.npy",model=['er','ws','ba'],n_nodes=synthetic_n_nodes)
+    output:
+        "results/sir/curves.png"
+    script:
+        "scripts/synthetic/curves.py"
+
+
+rule coarsen:
+    '''Coarsens a graph dataset
+
+    Input:
+        - Scipy Sparse Array containing the adjacency matrix of the graph to coarsen
     
-#     Output:
-#         - Scipy Sparse Array containing the adjacency matrix of the reduced graph
-#     '''
-#     input:
-#         "data/networks/{graph}/giant/graph_adjacency.npz",
-#     output:
-#         "data/networks/{graph}/giant/coarsening/{miniature}/graph_adjacency.npz",
-#     log:
-#         "logs/{graph}/coarsening/{miniature}/reduction.log"
-#     message:
-#         "Coarsening graph '{wildcards.graph}' ({wildcards.miniature})..."
-#     params:
-#         alpha=lambda w:config['miniatures'][w.miniature]['alpha']
-#     resources:
-#         runtime=60,
-#         mem_mb=2000
-#     script:
-#         "scripts/reduction/coarsen.py"
-
-# rule sparsify:
-#     '''Sparsifies a graph dataset
-
-#     Input:
-#         - Scipy Sparse Array with the adjacency matrix the graph to sparsify.
-#     Output:
-#         - Scipy Sparse Array with the adjacency matrix of the sparsified graph.
-#     '''
-#     input:
-#         "data/networks/{graph}/giant/graph_adjacency.npz",
-#         "data/networks/{graph}/giant/miniaturization/{miniature}/graph_metrics.yaml"
-#     output:
-#         "data/networks/{graph}/giant/sparsification/{miniature}/graph_adjacency.npz"
-#     log:
-#         "logs/{graph}/sparsification/{miniature}/reduction.log"
-#     message:
-#         "Sparsifying graph '{wildcards.graph}' ({wildcards.miniature})..."
-#     resources:
-#         runtime=15,
-#         mem_mb=6000
-#     script:
-#         "scripts/reduction/sparsify.py"
+    Output:
+        - Scipy Sparse Array containing the adjacency matrix of the reduced graph
+    '''
+    input:
+        "data/networks/{network}/graph_adjacency.npz",
+    output:
+        "data/coarsening/{network}/min_{n_nodes}/graph_adjacency.npz"
+    log:
+        "logs/coarsening/{network}/min_{n_nodes}/reduction.log"
+    message:
+        "Coarsening graph '{wildcards.graph}' ({wildcards.miniature})..."
+    params:
+        n_nodes=lambda w: int(w.n_nodes)
+    resources:
+        runtime=60,
+        mem_mb=2000
+    script:
+        "scripts/reduction/coarsen.py"
 
 rule metrics:
     '''Characterizes a graph by calculating its relevant metrics
@@ -166,67 +187,15 @@ rule metrics:
     script:
         "scripts/graph_characterize.py"
 
-# rule distribution:
-#     '''Calculates the distribution over some node property
-
-#     The degree distribution of the pairwise-distance distribution of graph
-#     nodes is calculated. 
-
-#     Input:
-#         - Scipy Sparse Array containing the adjacency matrix of the graph
-
-#     Output:
-#         - 2-D Numpy Array representing the PDF of the specified property.
-#           The first column contains that the prroperty takes. The second
-#           column are the frequencies for each value.
-#     '''
-#     input:
-#         "{path}/graph_adjacency.npz"
-#     output:
-#         "{path}/distribution_{quantity}.npy"
-#     script:
-#         "scripts/graph_distribution.py"
-
-# rule distribution_metrics:
-#     '''Calculates metrics from the specified distribution. 
-
-#     Calculates relevant measures of central tendency as well as some 
-#     low order moments of the distribution.
-
-#     Input:
-#         - Numpy Array containing the distribution.
-
-#     Output:
-#         - YAML file containing the requested metrics.
-#     '''
-#     input:
-#         "{path}/distribution_{quantity}.npy"
-#     output:
-#         "{path}/distribution_{quantity}.yaml"
-#     script:
-#         "scripts/graph_distribution_metrics.py"
-
-rule sir:
-    '''Simulates the diffusion model on the graph.
-
-    For the SIR model, the trajectories returned by the rule are the 
-    normalized populations for each compartment at every iteration.
-
-    Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph.
-
-    Output:
-        - Numpy Array containing the relevant trajectories of the model.
+rule sir_original:
+    '''Simulates the diffusion model on the original graph.
     '''
     input:
-        "{path}/graph_adjacency.npz",
+        "data/networks/{network}/graph_adjacency.npz",
     output:
-        "{path}/sir_trajectories.npy"
+        "data/networks/{network}/sir_trajectories.npy"
     params:
-        n_steps=config['miniaturization']['sir']['n_steps'],
-        n_trials=config['miniaturization']['sir']['n_trials'],
-        tau=config['miniaturization']['sir']['tau'],
-        gamma=config['miniaturization']['sir']['gamma']
+        sir_params=config['miniaturization']['sir']
     resources:
         runtime=60,
         mem_mb=1000,
@@ -234,66 +203,39 @@ rule sir:
     script:
         "scripts/sir/simulate.py"
 
-# rule draw_miniature:
-#     '''Generates visualization for PT miniaturization.
-#     '''
-#     input:
-#         "data/networks/{graph}/giant/graph_metrics.yaml",
-#         "data/networks/{graph}/giant/miniaturization/{miniature}/graph_metrics.yaml",
-#         "data/networks/{graph}/giant/miniaturization/{miniature}/trajectories"
-#     output:
-#         "results/{graph}/miniaturization/trajectories_plane_{miniature}.png",
-#         "results/{graph}/miniaturization/trajectories_error_{miniature}.png"
-#     notebook:
-#         "scripts/draw/miniaturization_trajectories.py.ipynb"
+def sir_miniature_params(wildcards, input):
+    # Retrieve simulation parameters
+    params = {key: value for key, value in config['miniaturization']['sir'].items()}
 
-# rule draw_metrics:
-#     '''Plots the evolution of graph metrics.
-#     '''
-#     input:
-#         "data/networks/{graph}/giant/graph_metrics.yaml",
-#         expand("data/networks/{{graph}}/giant/{{method}}/{miniature}/graph_metrics.yaml",miniature=miniatures)
-#     params:
-#         alpha=lambda w: {miniature: config['miniatures'][miniature]['alpha'] for miniature in miniatures}
-#     output:
-#         "results/{graph}/metrics/reduction_{method}.png",
-#         "results/{graph}/metrics/networks_{method}.png",
-#         "results/{graph}/metrics/spectral_{method}.png"
-#     notebook:
-#         "scripts/draw/metrics.py.ipynb"
+    # Calculate ratio from change in spectral radius
+    ratio = load_dict(input[1])['eig_1'] / load_dict(input[2])['eig_1']
 
-# def draw_sir_input(wildcards):
-#     # Define extension
-#     if wildcards.type == "trajectories":
-#         extension = "npy"
-#     elif wildcards.type == "qois":
-#         extension = "yaml"
+    # Update recovery rate
+    params['gamma'] *= ratio 
 
-#     # Construct list of input files
-#     files = []
-#     files.append(f"data/networks/{wildcards.graph}/giant/sir_{wildcards.type}.{extension}")
-#     for miniature in miniatures:
-#         files.append(f"data/networks/{wildcards.graph}/giant/{wildcards.method}/{miniature}/sir_{wildcards.type}.{extension}")
+    return params
 
-#     return files
+rule sir_miniature:
+    '''Simulates sir on the miniatures of the original network. 
 
-# rule draw_sir:
-#     '''Plots the trajectories of the SIR model.
+    Performas a reescaling of the simulation parameters of the SIR model based on the
+    relative change in the spectral radius of the graph.
+    '''
+    input:
+        "data/miniaturization/{network}/{miniature}/graph_adjacency.npz",
+        "data/miniaturization/{network}/{miniature}/graph_metrics.yaml",
+        "data/networks/{network}/graph_metrics.yaml",
 
-#     Input:
-#         - Numpy Array of SIR trajectories.
-
-#     Output:
-#         - PNG file with an SIR plot.
-#     '''
-#     input:
-#         draw_sir_input
-#     params:
-#         alpha=lambda w: {miniature: config['miniatures'][miniature]['alpha'] for miniature in miniatures}
-#     output:
-#         "results/{graph}/sir/{type}_{method}.png"
-#     notebook:
-#         "scripts/draw/sir_{wildcards.type}.py.ipynb"
+    output:
+        "data/miniaturization/{network}/{miniature}/sir_trajectories.npy"
+    params:
+        sir_params=sir_miniature_params
+    resources:
+        runtime=20,
+        mem_mb=500,
+        cpus_per_task=1,
+    script:
+        "scripts/sir/simulate.py"
 
 rule sir_qois:
     '''Calculates the Quantities of Interest of the SIR model.
@@ -323,38 +265,16 @@ rule sir_curves:
             f"data/miniaturization/{w.network}/{miniature}_[{','.join(config['miniaturization'][w.network]['targets'])}]_{idx}/sir_trajectories.npy" \
             for idx in range(config['miniaturization']['n_miniatures']) \
             for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
-        ]
-    output:
-        "results/miniaturization/{network}/sir_curves.png"
-    script:
-        "scripts/sir/curves.py"
-
-rule draw_miniaturization:
-    '''Draws the original graph as well as all its miniatures
-    '''
-    input:
-        original=expand("data/networks/{{network}}/{file}", file=["graph_adjacency.npz", "graph_metrics.yaml", "graph_layout.npy"]),
-        miniatures= lambda w: [
-            f"data/miniaturization/{w.network}/{miniature}_[{','.join(config['miniaturization'][w.network]['targets'])}]_{idx}/{file}"
-            for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
-            for idx in range(config['miniaturization']['n_miniatures']) 
-            for file in ["graph_adjacency.npz", "graph_metrics.yaml", "graph_layout.npy"] 
-        ]
-        # miniatures=lambda w:[
-        #     [
-
-        #     ]
-        #     f"data/miniaturization/{w.network}/{miniature}_[{','.join(config['miniaturization'][w.network]['targets'])}]_{idx}/graph_layout.npy" \
+        ],
+        # ers=lambda w:[
+        #     f"data/miniaturization/{w.network}/random_{miniature.split('_')[1]}_{idx}/sir_trajectories.npy" \
         #     for idx in range(config['miniaturization']['n_miniatures']) \
         #     for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
         # ]
     output:
-        "results/miniaturization/{network}/networks.png"
-    params:
-        n_graphs=config['miniaturization']['n_miniatures'],
-        targets=lambda w:config['miniaturization'][w.network]['targets']
+        "results/miniaturization/{network}/sir_curves.png"
     script:
-        "scripts/draw/networks.py"
+        "scripts/sir/curves.py"
 
 
 rule layout:
@@ -377,48 +297,47 @@ rule layout:
     script:
         "scripts/draw/graph_layout.py"
 
-# rule draw_reduction:
-#     input:
-#         "data/networks/{graph}/giant/{method}/{miniature}/graph_adjacency.npz",
-#         "data/networks/{graph}/giant/{method}/{miniature}/graph_layout.npy"
-#     output:
-#         "results/{graph}/drawings/{method}/{miniature}.png"
-#     wildcard_constraints:
-#         method="coarsening|miniaturization"
-#     message:
-#         "Drawing graph {wildcards.miniature} for {wildcards.method}..."
-#     script:
-#         "scripts/draw/graph.py"
+rule er:
+    '''Draw ER network
+    '''
+    output:
+        "data/miniaturization/{network}/er_{n_nodes}/graph_adjacency.npz"
+    run:
+        save_graph(output[0],erdos_renyi_graph(int(wildcards.n_nodes),0.007))
 
-# rule draw_sparsification:
-#     '''Creates a visualization of the graph dataset.
+rule draw_miniature:
+    '''Draws the specified graph
+    '''
+    input:
+        "data/miniaturization/{network}/{miniature}/graph_adjacency.npz",
+        "data/miniaturization/{network}/{miniature}/graph_layout.npy"
+    output:
+        "results/miniaturization/{network}/networks/{miniature}.png"
+    params:
+        properties=config['drawings']
+    script:
+        "scripts/draw/graph.py"
 
-#     Takes a previously generated graph layout and draws a graph on top of it.
+def draw_original_params(wildcards):
+    properties = config['drawings'].copy()
+    properties['nodes']['node_size'] *= 0.5
+    properties['edges']['alpha'] *= 0.5
 
-#     Input:
-#         - Numpy Array containing the graph layout
+    return properties
+rule draw_original:
+    '''Draws the original graph
+    '''
+    input:
+        "data/networks/{network}/graph_adjacency.npz",
+        "data/networks/{network}/graph_layout.npy"
+    output:
+        "results/miniaturization/{network}/networks/original.png"
+    params:
+        properties=draw_original_params
+    script:
+        "scripts/draw/graph.py"
 
-#     Output:
-#         - PNG file with a visualization of the graph dataset
+# rule draw_miniaturization:
+#     '''Draws Miniaturization Paths for visualization
 #     '''
-#     input:
-#         "data/networks/{graph}/giant/sparsification/{miniature}/graph_adjacency.npz",
-#         "data/networks/{graph}/giant/graph_layout.npy"
-#     output:
-#         "results/{graph}/drawings/sparsification/{miniature}.png"
-#     message:
-#         "Drawing graph {wildcards.miniature} for sparsification..."
-#     script:
-#         "scripts/draw/graph.py"
-
-# rule draw_graph_original:
-#     input:
-#         "data/networks/{graph}/giant/graph_adjacency.npz",
-#         "data/networks/{graph}/giant/graph_layout.npy"
-#     output:
-#         "results/{graph}/drawings/giant.png"
-#     message:
-#         "Drawing graph {wildcards.graph}..."
-#     script:
-#         "scripts/draw/graph.py"
 

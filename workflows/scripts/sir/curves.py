@@ -41,13 +41,12 @@ for file in snakemake.input.miniatures:
         data[miniature] = [infected,]
     else:
         data[miniature].append(infected)
-        
-    
 
 sizes = dict(zip(data.keys(),[int(key.split('_')[1]) for key in data.keys()]))
-
+sizes_list = sorted(sizes.values(), reverse=True)
 max_nodes = max(sizes.values())
 min_nodes = min(sizes.values())
+
 
 for miniature, list in sorted(data.items(),reverse=True):
     color = 0.2 + 0.6 * (sizes[miniature]-min_nodes) / (max_nodes-min_nodes)

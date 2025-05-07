@@ -1,31 +1,34 @@
-import matplotlib.pyplot as plt 
-import networkx as nx
-from scripts.utils.io import load_graph
 from numpy import load
+import matplotlib
+import matplotlib.pyplot as plt
+from scripts.utils.io import load_graph, load_dict
+import networkx as nx
 
-# Load the graph and Layout
+matplotlib.use('Agg')
+# Load graph and layout
 graph = load_graph(snakemake.input[0])
-pos = load(snakemake.input[1],allow_pickle=True)[()]
+layout = load(snakemake.input[1],allow_pickle=True)[()]
 
-# Draw Graph
-fig, ax = plt.subplots(figsize=(5,5),dpi=600)
-color = list(nx.clustering(graph).values())
+# Modify properties
+properties = snakemake.params.properties
+properties['edges']['width'] = 1.0
+properties['nodes']['node_color'] = nx.clustering(graph).values()
 
-ax.set_title(f"|V|={graph.number_of_nodes()}, den={nx.density(graph):.2e}")
-ax.set_yticks([])
-ax.set_xticks([])
-ax.set_facecolor('black')
+# Draw graph with specified parameters
+fig, ax = plt.subplots(figsize=(10,10), dpi=300)
 
-nx.draw_networkx_nodes(graph,pos,
-                       node_size=0.1,
-                       node_color=color,
-                       vmin=0.0,
-                       vmax=1.0,
-                       alpha=0.7,
-                       cmap='cool')
-nx.draw_networkx_edges(graph,pos,
-                       edge_color="white",
-                       alpha=0.05,
-                       width=0.5)
+nx.draw_networkx_edges(
+    graph,
+    layout,
+    **properties['edges']
+)
 
-plt.savefig(snakemake.output[0],bbox_inches='tight')
+nx.draw_networkx_nodes(
+    graph,
+    layout,
+    **properties['nodes']
+)
+
+ax.set_axis_off()
+
+plt.savefig(snakemake.output[0], transparent=True, bbox_inches='tight')
