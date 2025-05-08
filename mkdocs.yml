@@ -48,5 +48,5 @@ nav:
       - minigraphs.simulation:  reference/simulation.md
       - minigraphs.mcmc:        reference/mcmc.md
       - minigraphs.metrics:     reference/metrics.md 
-
+      - minigraphs.reduction:   reference/reduction.md
 
