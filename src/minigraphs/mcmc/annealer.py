@@ -1,10 +1,9 @@
-from typing import Union, Callable, Iterable, Optional, Deque
+from typing import Union, Callable, Optional, Deque
 from collections import deque
 from tqdm import tqdm 
 from .chains import Chain 
 from math import exp
 import random 
-import numpy as np 
 from networkx import Graph
 
 class SimulatedAnnealing:
@@ -43,7 +42,7 @@ class SimulatedAnnealing:
     ) -> None:
         self.chain = chain
         self.energy_fn = energy
-        self.schedule = schedule if callable(schedule) else lambda _: float(schedule)
+        self.schedule = schedule 
         self.max_steps = max_steps
         self.random = random.Random(seed)
 
@@ -55,12 +54,13 @@ class SimulatedAnnealing:
         self.total_proposals_ = 0
         self.current_graph_ = self.chain.state
         self.current_energy_ = self.energy_fn(self.current_graph_)
+        schedule = self.schedule if callable(self.schedule) else lambda _: float(schedule)
 
         # Initialize best graph along with it's energy
         self.best_graph_ = (self.current_graph_, self.current_energy_)
 
         for step in tqdm(range(self.max_steps)):
-            beta = self.schedule(step)
+            beta = schedule(step)
             new_graph = self.chain._propose()
             new_energy = self.energy_fn(new_graph)
 
