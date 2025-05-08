@@ -49,4 +49,5 @@ nav:
       - minigraphs.mcmc:        reference/mcmc.md
       - minigraphs.metrics:     reference/metrics.md 
       - minigraphs.reduction:   reference/reduction.md
+      - minigraphs.inspection:  reference/inspection.md
 
