@@ -54,7 +54,7 @@ class SimulatedAnnealing:
         self.total_proposals_ = 0
         self.current_graph_ = self.chain.state
         self.current_energy_ = self.energy_fn(self.current_graph_)
-        schedule = self.schedule if callable(self.schedule) else lambda _: float(schedule)
+        schedule = self.schedule if callable(self.schedule) else lambda _: float(self.schedule)
 
         # Initialize best graph along with it's energy
         self.best_graph_ = (self.current_graph_, self.current_energy_)
