@@ -3,13 +3,14 @@ import networkx as nx
 from typing import Dict, Callable
 from collections import deque
 from tqdm import tqdm 
-from .mcmc.chains import Chain
+from .chains import Chain
 
 def subgraph_metrics(
         chain: Chain,
         n_samples: int,
         metrics: Dict[str, Callable[[nx.Graph], float]]
     ) -> pd.DataFrame:
+
     # Empty list for metrics
     measurements = deque()
 
