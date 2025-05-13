@@ -24,28 +24,31 @@ class SimulatedAnnealing:
     energy : Callable[[nx.Graph], float]
         Function that returns *energy* (lower is better) of a graph.
     schedule : Union[float, Callable[[int], float]]
-        Temperature schedule. A constant (float) means fixed temperature.
-        Otherwise provide a function ``T(step)``.
-    max_steps : int, default 10_000
+        Inverse temperature of the annealer at every iteration of the process (schedule).
+    n_steps : int, default 10_000
         Total number of proposal steps.
     seed : Optional[int]
-        Random state for the ennealer.
+        Random state for the annealer.
     verbose : bool, default=False
+        Whether to display a progress bar.
 
     Attributes
     ----------
-    energies_ : Deque[float]
-        History of energies at every time step.
-    best_graph_ : Tuple[Graph, float]
-        Graph with the lowest energy throghout the process, along with it's corresponding energy.
+    best_energy_ : float
+        Lowest energy encountered along the process.
+    best_graph_ : Graph
+        Lowest energy graph found along the process.
+    history_ : DataFrame
+        Pandas Dataframe containing the history of inverse temepratures and energies visited
+        by the annealer.
     """
     def __init__(
         self,
         chain: Chain,
         energy: Callable[[Graph], float],
         schedule: Union[float, Callable[[int], float]],
-        *,
         n_steps: int = 1_000,
+        *,
         seed: Optional[int] = None,
         verbose: Optional[bool]= False,
 
