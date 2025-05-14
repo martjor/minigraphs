@@ -1,5 +1,4 @@
-from typing import Union, Callable, Optional
-from collections import deque
+from typing import Union, Callable, Optional, List
 from tqdm import tqdm 
 from .chains import Chain 
 from math import exp
@@ -62,7 +61,12 @@ class SimulatedAnnealing:
 
     def run(self) -> None:
         """Run the annealing / MCMC loop."""
-        self._history_ = deque()
+        #=== CHECKS ===#
+        if self.n_steps <= 0:
+            raise ValueError("Error: Number of steps must be greater than 0.")
+        
+        #=== INITIALIZATION ===#
+        self._history_ : List[State] = [None] * self.n_steps
 
         # Initialize internal state
         old_graph = self.chain.state 
@@ -97,11 +101,9 @@ class SimulatedAnnealing:
                     self.best_energy_ = new_energy
 
             # Store state
-            self._history_.append(
-                State(
-                    beta=beta,
-                    energy=old_energy
-                )
+            self._history_[step] = State(
+                beta=beta,
+                energy=old_energy
             )
 
     @property
