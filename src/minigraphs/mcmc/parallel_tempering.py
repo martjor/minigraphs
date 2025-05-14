@@ -1,10 +1,10 @@
-from mpi4py.MPI import Comm
+from mpi4py.MPI import Comm, MINLOC, DOUBLE_INT
 from .annealer import SimulatedAnnealing
 from .chains import Chain
-from typing import List, Tuple, Callable, Optional
+from typing import List, Tuple, Callable, Optional, Dict, Any
 from networkx import Graph
 from math import ceil, exp
-from collections import deque
+import numpy as np 
 import pandas as pd
 import random
 from functools import wraps
@@ -183,11 +183,37 @@ class ParallelTempering:
             )
 
     @wraps(pd.DataFrame.to_csv)
-    def results_to_csv(self, *args, **kwargs):
+    def results_to_csv(self, *args, **kwargs) -> None:
         """Saves the trajectories of each replica to a csv file.
         """
         if self.rank == 0:
             self._results.to_csv(*args, **kwargs)
+
+    def best_graph_save(self, function: Callable[[Graph], None], **kwargs: Dict[str, Any]) -> None:
+        """Saves the best graph found along the process using the specified function.
+
+        Parameters
+        ----------
+        function : Callable[[Graph], None]
+            Function that will be used to save the graph.
+
+        kwargs : Dict[str, Any]
+            Dictionary of arguments passed to the saving function.
+        """
+        dtype = [('energy', np.float64), ('rank', np.int32)]
+        sendbuf = np.array((self.annealer.best_energy_, self.rank), dtype=dtype)
+        recvbuf = np.array((0.0, -1), dtype=dtype)
+
+        self.comm.Allreduce(
+            [sendbuf, 1, DOUBLE_INT],
+            [recvbuf, 1, DOUBLE_INT],
+            op=MINLOC
+        )
+
+        if self.rank == recvbuf['rank']:
+            print(f"Rank {self.rank}: saving best graph...")
+            function(self.annealer.best_graph_, **kwargs)
+
 
     
 
