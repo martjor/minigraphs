@@ -1,7 +1,13 @@
 site_name: Graph Miniaturization
 
-theme: material
-
+theme: 
+    name: material
+    features: 
+        - navigation.tabs 
+        - navigation.top 
+        - navigation.sections
+        - navigation.instant
+        - navigation.footer
 plugins:
     - search 
     - mkdocstrings:
@@ -11,19 +17,21 @@ plugins:
                 options:
                     ignore_init_summary: false
                     show_root_heading: True
-                    show_root_full_path: False
+                    show_root_full_path: True
                     show_symbol_type_heading: True
                     show_symbol_type_toc: True
-                    show_category_heading: False
-                    show_source: False
+                    show_category_heading: True
+                    show_source: True
+                    show_signatures: True
                     show_inheritance_diagram: True
+                    show_attributes: True
 
                     docstring_style: numpy
-                    docstring_section_style: table
+                    docstring_section_style: list
                     
-                    filters:
-                        - "__init__"
-                        - "!^__(?!init__$)"
+                    # filters:
+                    #     - "__init__"
+                    #     - "!^__(?!init__$)"
                         
                     #show_root_toc_entry: false
 
@@ -35,11 +43,11 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
-    - Home: index.md
-    - Reference:
-        - Simulation:   reference/simulation.md
-        - MCMC: reference/mcmc.md
-    # - Tutorial
-    # - How-to
-    # - Explanation
+  - Home: index.md
+  - API Reference:
+      - minigraphs.simulation:  reference/simulation.md
+      - minigraphs.mcmc:        reference/mcmc.md
+      - minigraphs.metrics:     reference/metrics.md 
+      - minigraphs.reduction:   reference/reduction.md
+      - minigraphs.inspection:  reference/inspection.md
 
