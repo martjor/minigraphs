@@ -38,6 +38,8 @@ class ParallelTempering:
             Number of steps between exchanges.
         n_steps:
             Total number of steps to run the algorithm.
+        self.verbose:
+            Whether to display a progress bar.
         """
         self.comm = comm
         self.rank = self.comm.Get_rank()
