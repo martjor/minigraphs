@@ -4,6 +4,10 @@ minigraphs.egg-info/
 site/
 *.out
 *.err
+*.csv
+*.png
+*.html
+*.adjlist
 
 # Source directory
 src/miniaturize_batch.sh
@@ -22,5 +26,5 @@ workflows/**/results/
 
 workflows/config/
 
-*.png
+
 
