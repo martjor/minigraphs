@@ -4,8 +4,6 @@ from minigraphs.mcmc.chains import SubgraphBoundary
 from minigraphs.metrics import graph_spectrum
 import networkx as nx 
 from minigraphs.data import load_graph
-from seaborn import lineplot
-from matplotlib.pyplot import figure
 import sys
 
 hamsterster = load_graph('hamsterster')
@@ -21,34 +19,9 @@ runner = ParallelTempering(
     annealer_data=[(SubgraphBoundary(hamsterster, n_nodes, 1), inv_temp) for inv_temp in inverse_temperatures],
     energy=lambda graph: -spectral_radius(graph),
     exchange_freq=100,
-    n_steps=1000,
+    n_steps=10000,
 )
 
 runner.run()
 runner.gather_results()
-runner.results_to_csv("test.csv")
-
-if runner.rank == 0:
-    history = runner._results.reset_index()
-
-    figure()
-    g = lineplot(
-        history,
-        x='step',
-        hue='replica',
-        y='energy'
-    )
-
-    g.figure.savefig(sys.argv[1])
-
-    figure()
-    g = lineplot(
-        history,
-        x='step',
-        hue='replica',
-        y='beta'
-    )
-    
-    g.figure.savefig(sys.argv[2])
-
-runner.best_graph_save(nx.write_adjlist, path=sys.argv[3])
+runner.results_to_csv(sys.argv[1])

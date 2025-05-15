@@ -1,343 +1,49 @@
-import numpy as np
-import pandas as pd
-import yaml
-import shutil
-from scripts.utils.io import load_dict, save_dict, save_graph
-from networkx import erdos_renyi_graph
-import hashlib
-import matplotlib.pyplot as plt
-
 configfile: "config/config.yaml"
-settings=["warmup", "sir", "layout","n_miniatures"]
-
-networks=[key for key in config['miniaturization']['hamsterster'].keys() if (key != 'targets')]
-n_miniatures = config['miniaturization']['n_miniatures']
-
-synthetic_n_nodes = [10000, 4444, 2500]
-
-targets = config['miniaturization']['hamsterster']['targets']
+import pandas as pd
 
 rule all:
     input:
-        expand(
-            "results/miniaturization/{network}/networks/{miniature}_{index}.png",
-            network=["hamsterster"],
-            miniature=[f"{network}_[{','.join(targets)}]" for network in networks],
-            index=range(n_miniatures)
-        ),
-        "results/miniaturization/hamsterster/networks/er_600.png",
-        "results/miniaturization/hamsterster/networks/original.png"
-        # Visualization of all networks
-        #f"results/miniaturization/{network}/networks.png",
+        "results/chains/comparisons.png"
 
-        # Visualization of varying SIR curves
-        #f"results/miniaturization/{network}/sir_curves.png",
-
-        # Visualization for each miniature
-        
-
-
-        # "results/sir/synthetics_metrics.png",
-        # "results/sir/curves.png"
-
-rule min_params:
-    '''Calculates the optimal miniaturization parameters of a graph
-    
-    Input:
-        - YAML file containing the metrics of the graphs to miniaturize
-
-    Output:
-        - YAML file containg the optimal weights and inverse temperature to miniaturize
-          the graph to the specified size
-    '''
-    input:
-        "data/networks/{network}/graph_metrics.yaml"
+rule test_chain:
     output:
-        "data/miniaturization/{network}/params_{n_nodes}_[{metrics}].yaml"
-    resources:
-        runtime=400,
-        mem_mb=2000
-    log:
-        "logs/min/{network}/params_{n_nodes}_[{metrics}].log"
-    params:
-        n_nodes=lambda w: int(w.n_nodes), 
-        n_steps=config['miniaturization']['warmup']['n_steps'],
-        n_trials=config['miniaturization']['warmup']['n_trials'],
-        targets=lambda w: w.metrics.split(',')
-
-    script:
-        "scripts/reduction/miniaturize_params.py"
-
-rule reduction:
-    '''Miniaturizes a graph using the parallel tempering algorithm
-
-    Input:
-        - YAML file containing the of the graph
-        - YAML file containing the miniaturization weights and inverse temperature
-    
-    Output:
-        - Scipy Sparse Array representing the adjacency matrix of the miniature
-        - Directory of parquet files containing the individual trajectories of each
-          replica of the parallel tempering algorithm
-    '''
-    input:
-        "data/networks/{network}/graph_metrics.yaml",
-        "data/miniaturization/{network}/params_{n_nodes}_[{metrics}].yaml"
-    output:
-        "data/miniaturization/{network}/min_{n_nodes}_[{metrics}]_{idx}/graph_adjacency.npz",
-        directory("data/miniaturization/{network}/min_{n_nodes}_[{metrics}]_{idx}/trajectories/")
-    params:
-        n_nodes=lambda w: int(w.n_nodes),
-        n_steps=lambda w: config['miniaturization'][w.network][f"min_{w.n_nodes}"]['n_exchanges'],
-        n_substeps=lambda w: config['miniaturization'][w.network][f"min_{w.n_nodes}"]['n_steps'],
-        targets=lambda w: w.metrics.split(',')
-    resources:
-        runtime=1440,
-        mem_mb=6000,
-        tasks=6,
-        mpi="mpiexec"
-    conda:
-        "envs/miniaturize.yaml"
-    log:
-        "logs/min/{network}/reduct_{n_nodes}_[{metrics}]_{idx}.log"
+        temp("data/benchmarks/n_nodes={n_nodes}.csv")
+    threads: 6
     shell:
-        "{resources.mpi} -n {resources.tasks} python -m scripts.reduction.miniaturize"
-        " {input[0]} {input[1]} {output[0]} {output[1]} {params.n_nodes} {params.targets}"
-        " --n_steps {params.n_steps}"
-        " --n_substeps {params.n_substeps}"
-        " --log-file {log[0]}"
+        "mpiexec -n {threads} python scripts/test_chain.py {output}"
 
-rule random_graphs:
-    '''Creates Random ER graphs with the same diffusion properties as the target graph
-    '''
+rule aggregate_chain_tests:
     input:
-        "data/networks/{network}/graph_metrics.yaml"
+        expand("data/benchmarks/n_nodes={n_nodes}.csv", n_nodes=config['benchmarks']['n_nodes'])
     output:
-        "data/miniaturization/{network}/random_{n_nodes}_{idx}/graph_adjacency.npz"
-    params:
-        n_nodes=lambda w: int(w.n_nodes)
-    script:
-        "scripts/reduction/random_graphs.py"
-
-rule graphs_synthetic:
-    '''Creates synthetic graphs
-    '''
-    output:
-        "data/networks/synthetic/{model}_{n_nodes}/graph_adjacency.npz"
-    params:
-        sizes=synthetic_n_nodes
-    script:
-        "scripts/synthetic/generate.py"
-
-rule viz_synthetic:
-    input:
-        expand("data/networks/synthetic/{model}_{n_nodes}/graph_metrics.yaml",model=['er','ws','ba'],n_nodes=synthetic_n_nodes),
-    output:
-        "results/sir/synthetics_metrics.png"
-    script:
-        "scripts/synthetic/plot.py"
-
-rule sir_synthetic:
-    input:
-        expand("data/networks/synthetic/{model}_{n_nodes}/sir_trajectories.npy",model=['er','ws','ba'],n_nodes=synthetic_n_nodes)
-    output:
-        "results/sir/curves.png"
-    script:
-        "scripts/synthetic/curves.py"
-
-
-rule coarsen:
-    '''Coarsens a graph dataset
-
-    Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph to coarsen
-    
-    Output:
-        - Scipy Sparse Array containing the adjacency matrix of the reduced graph
-    '''
-    input:
-        "data/networks/{network}/graph_adjacency.npz",
-    output:
-        "data/coarsening/{network}/min_{n_nodes}/graph_adjacency.npz"
-    log:
-        "logs/coarsening/{network}/min_{n_nodes}/reduction.log"
-    message:
-        "Coarsening graph '{wildcards.graph}' ({wildcards.miniature})..."
-    params:
-        n_nodes=lambda w: int(w.n_nodes)
-    resources:
-        runtime=60,
-        mem_mb=2000
-    script:
-        "scripts/reduction/coarsen.py"
-
-rule metrics:
-    '''Characterizes a graph by calculating its relevant metrics
-
-    Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph
-    
-    Output:
-        - YAML file containing the network metrics of the graph
-    '''
-    input:
-        "{path}/graph_adjacency.npz"
-    output:
-        "{path}/graph_metrics.yaml"
-    script:
-        "scripts/graph_characterize.py"
-
-rule sir_original:
-    '''Simulates the diffusion model on the original graph.
-    '''
-    input:
-        "data/networks/{network}/graph_adjacency.npz",
-    output:
-        "data/networks/{network}/sir_trajectories.npy"
-    params:
-        sir_params=config['miniaturization']['sir']
-    resources:
-        runtime=60,
-        mem_mb=1000,
-        cpus_per_task=1,
-    script:
-        "scripts/sir/simulate.py"
-
-def sir_miniature_params(wildcards, input):
-    # Retrieve simulation parameters
-    params = {key: value for key, value in config['miniaturization']['sir'].items()}
-
-    # Calculate ratio from change in spectral radius
-    ratio = load_dict(input[1])['eig_1'] / load_dict(input[2])['eig_1']
-
-    # Update recovery rate
-    params['gamma'] *= ratio 
-
-    return params
-
-rule sir_miniature:
-    '''Simulates sir on the miniatures of the original network. 
-
-    Performas a reescaling of the simulation parameters of the SIR model based on the
-    relative change in the spectral radius of the graph.
-    '''
-    input:
-        "data/miniaturization/{network}/{miniature}/graph_adjacency.npz",
-        "data/miniaturization/{network}/{miniature}/graph_metrics.yaml",
-        "data/networks/{network}/graph_metrics.yaml",
-
-    output:
-        "data/miniaturization/{network}/{miniature}/sir_trajectories.npy"
-    params:
-        sir_params=sir_miniature_params
-    resources:
-        runtime=20,
-        mem_mb=500,
-        cpus_per_task=1,
-    script:
-        "scripts/sir/simulate.py"
-
-rule sir_qois:
-    '''Calculates the Quantities of Interest of the SIR model.
-
-    The QOIs include total epidemic size, peak of number of infected
-    people, and time-to-peak.
-
-    Input:
-        - Numpy array of SIR trajectories.
-
-    Output:
-        - YAML file with the QOIs of the SIR model.
-    '''
-    input:
-        "{path}/sir_trajectories.npy"
-    output:
-        "{path}/sir_qois.yaml"
-    script:
-        "scripts/sir/qois.py"
-
-rule sir_curves:
-    '''Generate visualizations for the SIR model using the graph miniatures
-    '''
-    input:
-        original="data/networks/{network}/sir_trajectories.npy",
-        miniatures=lambda w:[
-            f"data/miniaturization/{w.network}/{miniature}_[{','.join(config['miniaturization'][w.network]['targets'])}]_{idx}/sir_trajectories.npy" \
-            for idx in range(config['miniaturization']['n_miniatures']) \
-            for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
-        ],
-        # ers=lambda w:[
-        #     f"data/miniaturization/{w.network}/random_{miniature.split('_')[1]}_{idx}/sir_trajectories.npy" \
-        #     for idx in range(config['miniaturization']['n_miniatures']) \
-        #     for miniature in config['miniaturization'][w.network].keys() if "min_" in miniature
-        # ]
-    output:
-        "results/miniaturization/{network}/sir_curves.png"
-    script:
-        "scripts/sir/curves.py"
-
-
-rule layout:
-    '''Calculates the graph layout to enable visualization
-
-    Utilizes the ForceAtlas2 algorithm to calculate the layout of the graph dataset.
-
-    Input:
-        - Scipy Sparse Array containing the adjacency matrix of the graph.
-
-    Output:
-        - Numpy array containing the positions specifying the graph layout
-    '''
-    input:
-        "{path}/graph_adjacency.npz"
-    output:
-        "{path}/graph_layout.npy"
-    params:
-        max_iter=config['miniaturization']['layout']['max_iter']
-    script:
-        "scripts/draw/graph_layout.py"
-
-rule er:
-    '''Draw ER network
-    '''
-    output:
-        "data/miniaturization/{network}/er_{n_nodes}/graph_adjacency.npz"
+        "data/benchmarks/chains.csv"
     run:
-        save_graph(output[0],erdos_renyi_graph(int(wildcards.n_nodes),0.007))
+        pd.concat(
+            (pd.read_csv(file).set_index('replica') for file in input),
+            keys=config['benchmarks']['n_nodes'],
+            names=['n_nodes']
+        ).to_csv(output[0])
 
-rule draw_miniature:
-    '''Draws the specified graph
-    '''
+rule visualize_chains:
     input:
-        "data/miniaturization/{network}/{miniature}/graph_adjacency.npz",
-        "data/miniaturization/{network}/{miniature}/graph_layout.npy"
+        "data/benchmarks/chains.csv"
     output:
-        "results/miniaturization/{network}/networks/{miniature}.png"
-    params:
-        properties=config['drawings']
-    script:
-        "scripts/draw/graph.py"
+        report(
+            "results/chains/comparisons.png",
+            category="Plots"
+        )
+    threads: 1
+    run:
+        import matplotlib 
+        matplotlib.use('Agg')
+        import seaborn as sns 
+        import matplotlib.pyplot as plt 
+        import pandas as pd
 
-def draw_original_params(wildcards):
-    properties = config['drawings'].copy()
-    properties['nodes']['node_size'] *= 0.5
-    properties['edges']['alpha'] *= 0.5
+        df = pd.read_csv(input[0])
+        fig, axes = plt.subplots(2,1,figsize=(10,10), dpi=300)
+        sns.lineplot(df, x='step', y='beta', hue='n_nodes', style='replica', ax=axes[0])
+        sns.lineplot(df, x='step', y='energy', hue='n_nodes', style='replica', ax=axes[1])
 
-    return properties
-rule draw_original:
-    '''Draws the original graph
-    '''
-    input:
-        "data/networks/{network}/graph_adjacency.npz",
-        "data/networks/{network}/graph_layout.npy"
-    output:
-        "results/miniaturization/{network}/networks/original.png"
-    params:
-        properties=draw_original_params
-    script:
-        "scripts/draw/graph.py"
-
-# rule draw_miniaturization:
-#     '''Draws Miniaturization Paths for visualization
-#     '''
-
+        plt.savefig(output[0], bbox_inches='tight')
+    
