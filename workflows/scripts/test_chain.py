@@ -16,7 +16,7 @@ def spectral_radius(graph: nx.Graph) -> float:
 
 runner = ParallelTempering(
     COMM_WORLD,
-    annealer_data=[(SubgraphBoundary(hamsterster, n_nodes, 1), inv_temp) for inv_temp in inverse_temperatures],
+    annealer_data=[(SubgraphBoundary(hamsterster, n_nodes, int(sys.argv[1])), inv_temp) for inv_temp in inverse_temperatures],
     energy=lambda graph: -spectral_radius(graph),
     exchange_freq=100,
     n_steps=10000,
@@ -24,4 +24,4 @@ runner = ParallelTempering(
 
 runner.run()
 runner.gather_results()
-runner.results_to_csv(sys.argv[1])
+runner.results_to_csv(sys.argv[2])

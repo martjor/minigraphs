@@ -8,9 +8,11 @@ rule all:
 rule test_chain:
     output:
         temp("data/benchmarks/n_nodes={n_nodes}.csv")
+    params:
+        n_nodes=lambda w: w.n_nodes
     threads: 6
     shell:
-        "mpiexec -n {threads} python scripts/test_chain.py {output}"
+        "mpiexec -n {threads} python scripts/test_chain.py {params.n_nodes} {output}"
 
 rule aggregate_chain_tests:
     input:
