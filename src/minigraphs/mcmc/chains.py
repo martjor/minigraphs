@@ -16,29 +16,34 @@ class Chain(ABC):
         seed: int=None,
     ) -> None:
         self.random = random.Random(seed)
-        
-    @abstractmethod
-    def _propose(self) -> nx.Graph:
-        """Proposes a new graph from the current state.
-        """
     
+    @abstractmethod
+    def propose(self):
+        """Proposes a new graph and updates its internal state.
+        """
+        pass 
+
+    @abstractmethod
+    def reject(self):
+        """Rejects the graph proposal and retrieves the previous internal state.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def state(self) -> nx.Graph:
+        """Retrieves the current state of the chain.
+        """
+        
     def __iter__(self):
         return self 
     
     def __next__(self):
         """Propse new graph and update internal state.
         """
-        graph = self._propose()
-        self.graph_current = graph 
-        return graph
-
-    @property
-    def state(self) -> nx.Graph:
-        return self.graph_current
-    
-    @state.setter
-    def state(self, graph: nx.Graph):
-        self.graph_current = graph
+        state = self.state 
+        self.propose()
+        return state
 
 class SubgraphUniform(Chain):
     """Subgraphs are proposed by sampling uniformly from the original pool of nodes.
