@@ -54,12 +54,24 @@ class SubgraphUniform(Chain):
         self.n_nodes = n_nodes
 
         # Random subgraph
-        self.graph_current = nx.subgraph(graph, self.random.sample(list(graph.nodes), k=self.n_nodes))
+        self.subgraph = nx.subgraph(graph, self.random.sample(list(graph.nodes), k=self.n_nodes))
 
-    def _propose(self):
+    def propose(self):
         """Proposes a uniform random subgraph
         """
-        return nx.subgraph(self.graph, self.random.sample(list(self.graph.nodes), k=self.n_nodes))
+        self.old_nodes = [node for node in self.subgraph.nodes()]
+        self.subgraph = nx.subgraph(self.graph, self.random.sample(list(self.graph.nodes), k=self.n_nodes))
+    
+    def reject(self):
+        self.subgraph = self.subgraph(self.graph, self.old_nodes)
+    
+    @property 
+    def state(self):
+        """The currently sampled subgraph
+        """
+        return self.subgraph
+    
+
 
 class SubgraphBoundary(Chain):
     """Proposes subgraphs by replacing `n_swaps` nodes for nodes on the boundary with the subgraph. 
@@ -82,18 +94,27 @@ class SubgraphBoundary(Chain):
         if len(nodes) <= n_nodes:
             raise ValueError("Largest connected component is not large enough.")
         else:
-            self.graph_current = nx.subgraph(graph, self.random.sample(nodes, k=self.n_nodes))
+            self.subgraph = nx.subgraph(graph, self.random.sample(nodes, k=self.n_nodes))
 
-    def _propose(self):
+    def propose(self):
         """Proposes a new graph by swapping nodes from the boundary.
         """
-        nodes = list(self.graph_current.nodes)
-        nodes_boundary = list(nx.node_boundary(self.graph, nodes))
+        self.old_nodes = list(self.subgraph.nodes())
+        nodes_boundary = list(nx.node_boundary(self.graph, self.old_nodes))
 
         nodes_new = (
-            self.random.sample(nodes, k=(self.n_nodes - self.n_swaps)) + 
+            self.random.sample(self.old_nodes, k=(self.n_nodes - self.n_swaps)) + 
             self.random.sample(nodes_boundary, k=self.n_swaps)
         )
 
-        return nx.subgraph(self.graph, nodes_new)
+        self.subgraph = nx.subgraph(self.graph, nodes_new)
+    
+    def reject(self):
+        self.subgraph = nx.subgraph(self.graph, self.old_nodes)
+    
+    @property 
+    def state(self):
+        """The currently sampled subgraph
+        """
+        return self.subgraph
 
