@@ -44,6 +44,22 @@ def graph_spectrum(graph: nx.Graph, k: int=1) -> List[float]:
     
     return list(evals)
 
+def spectral_radius(graph: nx.Graph) -> float:
+    """Calculates the spectral radius (dominant eigenvalue) of the adjacency matrix of a graph.
+    
+    Parameters
+    ----------
+    graph : nx.Graph
+        Graph to calculate spectral radius.
+
+    Returns
+    -------
+    float
+        The spectral radius of the graph.
+    """
+    return graph_spectrum[0]
+    
+
 def laplacian_connectivity(G: nx.Graph, normalized: bool = False) -> float:
     """
     Compute the algebraic connectivity λ₂(L) of graph G.

@@ -6,7 +6,7 @@ import networkx as nx
 from minigraphs.data import load_graph
 from seaborn import lineplot
 from matplotlib.pyplot import figure
-import numpy as np 
+import sys
 
 hamsterster = load_graph('hamsterster')
 inverse_temperatures = [10, 100, 300, 500, 700, 1000]
@@ -21,7 +21,7 @@ runner = ParallelTempering(
     annealer_data=[(SubgraphBoundary(hamsterster, n_nodes, 1), inv_temp) for inv_temp in inverse_temperatures],
     energy=lambda graph: -spectral_radius(graph),
     exchange_freq=100,
-    n_steps=30000,
+    n_steps=1000,
 )
 
 runner.run()
@@ -39,7 +39,7 @@ if runner.rank == 0:
         y='energy'
     )
 
-    g.figure.savefig('energy.png')
+    g.figure.savefig(sys.argv[1])
 
     figure()
     g = lineplot(
@@ -49,6 +49,6 @@ if runner.rank == 0:
         y='beta'
     )
     
-    g.figure.savefig('schedule.png')
+    g.figure.savefig(sys.argv[2])
 
-runner.best_graph_save(nx.write_adjlist, path='best_graph.adjlist')
+runner.best_graph_save(nx.write_adjlist, path=sys.argv[3])

@@ -81,7 +81,8 @@ class SimulatedAnnealing:
 
         for step in tqdm(range(self.n_steps), disable=not self.verbose):
             beta = schedule(step)
-            new_graph = self.chain._propose()
+            self.chain.propose()
+            new_graph = self.chain.state 
             new_energy = self.energy_fn(new_graph)
 
             # Metropolis acceptance probability
@@ -89,9 +90,6 @@ class SimulatedAnnealing:
             accept = dE < 0 or self.random.random() < exp(-beta * dE)
 
             if accept:
-                # Update chain
-                self.chain.state = new_graph
-
                 # Update internal variables
                 old_graph, old_energy = new_graph, new_energy
 
@@ -99,6 +97,8 @@ class SimulatedAnnealing:
                 if self.best_energy_ > new_energy:
                     self.best_graph_ = new_graph
                     self.best_energy_ = new_energy
+            else:
+                self.chain.reject()
 
             # Store state
             self._history_[step] = State(
