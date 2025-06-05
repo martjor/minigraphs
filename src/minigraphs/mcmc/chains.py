@@ -72,7 +72,18 @@ class SubgraphUniform(Chain):
         return self.subgraph
     
 class SubgraphBoundary(Chain):
-    """Proposes subgraphs by replacing `n_swaps` nodes for nodes on the boundary with the subgraph. 
+    """Proposes subgraphs by replacing `n_swaps` nodes for nodes on the boundary with the subgraph.
+    
+    Parameters
+    ----------
+    graph : nx.Graph
+        Graph to sample from.
+    n_nodes : int
+        Number of nodes in the subgraph.
+    n_swaps : int 
+        Number of nodes to be exchanged from the boundary at each iteration.
+    seed : int 
+        State of the random number generator.
     """
     def __init__(
             self, 

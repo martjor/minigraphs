@@ -191,7 +191,7 @@ class ParallelTempering:
         if self.rank == 0:
             self._results.to_csv(*args, **kwargs)
 
-    def best_graph_save(self, function: Callable[[Graph], None], **kwargs: Dict[str, Any]) -> None:
+    def best_graph_save(self, function: Callable[[Graph], None], kwargs: Dict[str, Any]) -> None:
         """Saves the best graph found along the process using the specified function.
 
         Parameters

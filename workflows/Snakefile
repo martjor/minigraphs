@@ -3,49 +3,67 @@ import pandas as pd
 
 rule all:
     input:
-        "results/chains/comparisons.png"
+        expand("data/miniature_n-nodes={n_nodes}/graph.npz", n_nodes=config['miniaturization']['n_nodes'])
 
-rule test_chain:
+rule miniaturize:
+    """Miniaturizes a graph by sampling a subgraph using the SubgraphBoundary chain.
+    """
     output:
-        temp("data/benchmarks/n_nodes={n_nodes}.csv")
+        out_graph="data/miniature_n-nodes={n_nodes}/graph.npz",
+        out_df="data/miniature_n-nodes={n_nodes}/min_data.csv"
     params:
-        n_nodes=lambda w: w.n_nodes
+        n_nodes=lambda w: w.n_nodes,
+        n_steps=config['miniaturization']['n_steps'],
+        exchange_freq=config['miniaturization']['exchange_freq']
     threads: 6
+    log: 
+        stdout="logs/miniaturize/n-nodes={n_nodes}.stdout",
+        stderr="logs/miniaturize/n-nodes={n_nodes}.stderr"
+    resources:
+        runtime=30,
+        mem_mb=5000
     shell:
-        "mpiexec -n {threads} python scripts/test_chain.py {params.n_nodes} {output}"
+        "mpiexec -n {threads} python -m scripts.miniaturize"
+        "   --n-steps {params.n_steps}"
+        "   --exchange-freq {params.exchange_freq}"
+        "   --n-nodes {params.n_nodes}"
+        "   --out-graph {output.out_graph}"
+        "   --out-df {output.out_df}"
+        "   > {log.stdout}"
+        "   2> {log.stderr}"
 
-rule aggregate_chain_tests:
-    input:
-        expand("data/benchmarks/n_nodes={n_nodes}.csv", n_nodes=config['benchmarks']['n_nodes'])
-    output:
-        "data/benchmarks/chains.csv"
-    run:
-        pd.concat(
-            (pd.read_csv(file).set_index('replica') for file in input),
-            keys=config['benchmarks']['n_nodes'],
-            names=['n_nodes']
-        ).to_csv(output[0])
+# rule aggregate_chain_tests:
+#     input:
+#         expand("data/benchmarks/n_nodes={n_nodes}.csv", n_nodes=config['benchmarks']['n_nodes'])
+#     output:
+#         "data/benchmarks/chains.csv"
+#     run:
+#         pd.concat(
+#             (pd.read_csv(file).set_index('replica') for file in input),
+#             keys=config['benchmarks']['n_nodes'],
+#             names=['n_nodes']
+#         ).to_csv(output[0])
 
-rule visualize_chains:
-    input:
-        "data/benchmarks/chains.csv"
-    output:
-        report(
-            "results/chains/comparisons.png",
-            category="Plots"
-        )
-    threads: 1
-    run:
-        import matplotlib 
-        matplotlib.use('Agg')
-        import seaborn as sns 
-        import matplotlib.pyplot as plt 
-        import pandas as pd
+# rule visualize_chains:
+#     input:
+#         "data/benchmarks/chains.csv"
+#     output:
+#         report(
+#             "results/chains/comparisons.png",
+#             category="Plots"
+#         )
+#     threads: 1
+#     run:
+#         import matplotlib 
+#         matplotlib.use('Agg')
+#         import seaborn as sns 
+#         import matplotlib.pyplot as plt 
+#         import pandas as pd
 
-        df = pd.read_csv(input[0])
-        fig, axes = plt.subplots(2,1,figsize=(10,10), dpi=300)
-        sns.lineplot(df, x='step', y='beta', hue='n_nodes', style='replica', ax=axes[0])
-        sns.lineplot(df, x='step', y='energy', hue='n_nodes', style='replica', ax=axes[1])
+#         df = pd.read_csv(input[0])
+#         fig, axes = plt.subplots(2,1,figsize=(10,10), dpi=300)
+#         sns.lineplot(df, x='step', y='beta', hue='n_nodes', style='replica', ax=axes[0])
+#         sns.lineplot(df, x='step', y='energy', hue='n_nodes', style='replica', ax=axes[1])
 
-        plt.savefig(output[0], bbox_inches='tight')
+#         plt.savefig(output[0], bbox_inches='tight')
     

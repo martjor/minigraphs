@@ -57,7 +57,7 @@ def spectral_radius(graph: nx.Graph) -> float:
     float
         The spectral radius of the graph.
     """
-    return graph_spectrum[0]
+    return graph_spectrum(graph)[0]
     
 
 def laplacian_connectivity(G: nx.Graph, normalized: bool = False) -> float:
