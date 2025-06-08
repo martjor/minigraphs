@@ -1,9 +1,17 @@
 configfile: "config/config.yaml"
+
 import pandas as pd
 
 rule all:
     input:
-        expand("data/{n_nodes}_nodes/graph.npz", n_nodes=config['miniaturization']['n_nodes'])
+        expand(
+            "results/{n_nodes}_nodes/{file}", 
+            n_nodes=config['miniaturization']['n_nodes'],
+            file=[
+                "replica_trajectories.png",
+                "energy_distributions.png"
+            ]
+        )
 
 rule miniaturize:
     """Miniaturizes a graph by sampling a subgraph using the SubgraphBoundary chain.
@@ -33,6 +41,22 @@ rule miniaturize:
         "   --out-graph {output.out_graph}"
         "   --out-df {output.out_df}"
         "   &> {log}"
+
+rule viz_miniaturize:
+    input:
+        rc_file="config/style.rc",
+        csv_file="data/{n_nodes}_nodes/min_data.csv",
+    output:
+        report(
+            "results/{n_nodes}_nodes/replica_trajectories.png",
+            category="Plots",
+        ),
+        report(
+            "results/{n_nodes}_nodes/energy_distributions.png",
+            category="Plots",
+        )
+    notebook:
+        "notebooks/viz_miniaturize.py.ipynb"
 
 # rule aggregate_chain_tests:
 #     input:
