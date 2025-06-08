@@ -7,12 +7,14 @@ from minigraphs.data import load_graph
 import click
 
 @click.command
+@click.argument('betas', type=click.FLOAT, nargs=-1)
 @click.option('--n-steps', type=click.INT)
 @click.option('--exchange-freq', type=click.INT)
 @click.option('--n-nodes', type=click.INT)
 @click.option('--out-graph', type=click.Path())
 @click.option('--out-df', type=click.Path())
 def main(
+        betas,
         n_steps, 
         exchange_freq,
         n_nodes,
@@ -21,12 +23,11 @@ def main(
     ):
     n_swaps     = 10
     hamsterster = load_graph('hamsterster')
-    inverse_temperatures = [10, 100, 300, 500, 700, 1000]
 
     # Initialize annealer
     runner = ParallelTempering(
         COMM_WORLD,
-        annealer_data=[(SubgraphBoundary(hamsterster, n_nodes, n_swaps), inv_temp) for inv_temp in inverse_temperatures],
+        annealer_data=[(SubgraphBoundary(hamsterster, n_nodes, n_swaps), inv_temp) for inv_temp in betas],
         energy=lambda graph: -spectral_radius(graph),
         exchange_freq=exchange_freq,
         n_steps=n_steps,

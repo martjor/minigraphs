@@ -3,34 +3,36 @@ import pandas as pd
 
 rule all:
     input:
-        expand("data/miniature_n-nodes={n_nodes}/graph.npz", n_nodes=config['miniaturization']['n_nodes'])
+        expand("data/{n_nodes}_nodes/graph.npz", n_nodes=config['miniaturization']['n_nodes'])
 
 rule miniaturize:
     """Miniaturizes a graph by sampling a subgraph using the SubgraphBoundary chain.
     """
+    input:
+        tracking="scripts/miniaturize.py",
     output:
-        out_graph="data/miniature_n-nodes={n_nodes}/graph.npz",
-        out_df="data/miniature_n-nodes={n_nodes}/min_data.csv"
+        out_graph="data/{n_nodes}_nodes/graph.npz",
+        out_df="data/{n_nodes}_nodes/min_data.csv"
     params:
+        betas=lambda w: " ".join(str(beta) for beta in config['miniaturization']['betas']),
         n_nodes=lambda w: w.n_nodes,
         n_steps=config['miniaturization']['n_steps'],
         exchange_freq=config['miniaturization']['exchange_freq']
     threads: 6
     log: 
-        stdout="logs/miniaturize/n-nodes={n_nodes}.stdout",
-        stderr="logs/miniaturize/n-nodes={n_nodes}.stderr"
+        "logs/miniaturize/{n_nodes}_nodes.log"
     resources:
         runtime=30,
         mem_mb=5000
     shell:
         "mpiexec -n {threads} python -m scripts.miniaturize"
+        "   {params.betas}" # This is a tuple that shouls be passed to shell one element at a time
         "   --n-steps {params.n_steps}"
         "   --exchange-freq {params.exchange_freq}"
         "   --n-nodes {params.n_nodes}"
         "   --out-graph {output.out_graph}"
         "   --out-df {output.out_df}"
-        "   > {log.stdout}"
-        "   2> {log.stderr}"
+        "   &> {log}"
 
 # rule aggregate_chain_tests:
 #     input:
