@@ -61,7 +61,7 @@ class SIRModel(mesa.Model):
     gamma: float
         Recovery rate of an infected individual.
     network: nx.Graph
-        Underlying interaction network.
+        Underlying contact network.
     n_infected: int
         Number of infected individuals at the beginning of the simulation.
     seed: float
@@ -94,7 +94,7 @@ class SIRModel(mesa.Model):
             self,
             n=self.n_agents,
             compartment=compartments,
-            node=list(range(self.n_agents))
+            node=list(network.nodes())
         )
 
         # Create network and add agents to network
