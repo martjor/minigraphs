@@ -1,9 +1,15 @@
 import mesa
 from mesa.space import NetworkGrid
 from networkx import Graph
+from enum import Enum
+
+class Compartment(Enum):
+    S = 0
+    I = 1
+    R = 2
 
 class IndividualAgent(mesa.Agent):
-    def __init__(self, model, compartment, node):
+    def __init__(self, model: "SIRModel", compartment: Compartment, node: int):
         super().__init__(model)
         self.compartment = compartment
         self._compartment = None 
@@ -13,35 +19,29 @@ class IndividualAgent(mesa.Agent):
         '''Computes what the next state of the agent should be
         '''
         match self.compartment:
-            case "S":
+            case Compartment.S:
                 # Get neighbors of agent
                 neighbors = self.model.network.get_neighbors(self.node)
 
                 # Count infected neighbors
                 n_infected = 0 
                 for neighbor in neighbors:
-                    n_infected += 1 if neighbor.compartment == "I" else 0
+                    n_infected += 1 if neighbor.compartment == Compartment.I else 0
 
                 # Update state according to probability 
                 p_infected = 1 - (1 - self.model.beta) ** n_infected
 
                 if self.model.random.random() < p_infected:
-                    self._compartment = "I"
-
-                    self.model.compartment_count["S"] -= 1
-                    self.model.compartment_count["I"] += 1
+                    self._compartment = Compartment.I
                 else:
-                    self._compartment = "S" 
+                    self._compartment = Compartment.S
             
-            case "I":
+            case Compartment.I:
                 # Calculate probability of recovery
                 if self.model.random.random() < self.model.gamma:
-                    self._compartment = "R" 
+                    self._compartment = Compartment.R
 
-                    self.model.compartment_count["I"] -= 1
-                    self.model.compartment_count["R"] += 1
-
-            case _:
+            case Compartment.R:
                 # Recovered individuals remain recovered
                 pass
 
@@ -50,6 +50,15 @@ class IndividualAgent(mesa.Agent):
         '''
         self.compartment = self._compartment 
 
+def count_compartment(model: mesa.Model, compartment: Compartment):
+    count = 0
+    for agent in model.agents:
+        count += 1 if agent.compartment == compartment else 0
+
+    print(compartment, count)
+
+    return count
+        
 
 class SIRModel(mesa.Model):
     """Agent-based SIR model for the spread of disease.
@@ -81,13 +90,8 @@ class SIRModel(mesa.Model):
         self.beta = beta 
         self.gamma = gamma
 
-        # Initialize compartment count
-        self.compartment_count = dict.fromkeys(["S","I","R"], 0)
-        self.compartment_count["S"] = self.n_agents - n_infected
-        self.compartment_count["I"] = n_infected
-
         # Create agents
-        compartments = ["S"] * (self.n_agents - n_infected) + ["I"] * n_infected
+        compartments = [Compartment.S] * (self.n_agents - n_infected) + [Compartment.I] * n_infected
         self.random.shuffle(compartments)
 
         agents = IndividualAgent.create_agents(
@@ -104,9 +108,9 @@ class SIRModel(mesa.Model):
 
         self.datacollector = mesa.DataCollector(
             model_reporters={
-                'S': lambda m: m.compartment_count['S'],
-                'I': lambda m: m.compartment_count['I'],
-                'R': lambda m: m.compartment_count['R'],
+                'S': lambda model: count_compartment(model, Compartment.S),
+                'I': lambda model: count_compartment(model, Compartment.I),
+                'R': lambda model: count_compartment(model, Compartment.R)
             }
         )
 
