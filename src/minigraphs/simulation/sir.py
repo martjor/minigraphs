@@ -14,6 +14,7 @@ class IndividualAgent(mesa.Agent):
         self.compartment = compartment
         self._compartment = None 
         self.node = node
+        self.got_infected = False
 
     def compute_state(self):
         '''Computes what the next state of the agent should be
@@ -33,10 +34,19 @@ class IndividualAgent(mesa.Agent):
 
                 if self.model.random.random() < p_infected:
                     self._compartment = Compartment.I
+
+                    # Update flag
+                    self.got_infected = True
                 else:
                     self._compartment = Compartment.S
+
+                
             
             case Compartment.I:
+                # Update flag
+                if self.got_infected:
+                    self.got_infected = False 
+
                 # Calculate probability of recovery
                 if self.model.random.random() < self.model.gamma:
                     self._compartment = Compartment.R
@@ -50,12 +60,17 @@ class IndividualAgent(mesa.Agent):
         '''
         self.compartment = self._compartment 
 
-def count_compartment(model: mesa.Model, compartment: Compartment):
+def count_compartment(model: "SIRModel", compartment: Compartment) -> int:
     count = 0
     for agent in model.agents:
         count += 1 if agent.compartment == compartment else 0
 
-    print(compartment, count)
+    return count
+
+def count_new_infections(model: "SIRModel") -> int:
+    count = 0
+    for agent in model.agents:
+        count += agent.got_infected
 
     return count
         
@@ -110,7 +125,8 @@ class SIRModel(mesa.Model):
             model_reporters={
                 'S': lambda model: count_compartment(model, Compartment.S),
                 'I': lambda model: count_compartment(model, Compartment.I),
-                'R': lambda model: count_compartment(model, Compartment.R)
+                'R': lambda model: count_compartment(model, Compartment.R),
+                'n_new_infections': lambda model: count_new_infections(model)
             }
         )
 
